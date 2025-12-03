@@ -194,6 +194,17 @@ INDEXNOW_API_KEY=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 
 ## 📦 Installation
 
+**Complete installation guide - follow these steps in order:**
+
+1. Install package via Composer
+2. Publish configuration and migrations
+3. Run migrations to create database tables
+4. Set up Google Service Account (see Prerequisites above)
+5. Configure environment variables
+6. Test the connection
+
+---
+
 ### Step 1: Install Package
 
 ```bash
@@ -203,22 +214,58 @@ composer require shammaa/laravel-page-indexer
 ### Step 2: Publish Configuration & Migrations
 
 ```bash
-# Publish configuration
+# Publish configuration file
 php artisan vendor:publish --tag=page-indexer-config
 
-# Publish migrations
+# Publish migration files
 php artisan vendor:publish --tag=page-indexer-migrations
 ```
 
-### Step 3: Configure Environment Variables
+**What this does:**
+- Creates `config/page-indexer.php` in your config directory
+- Copies migration files to `database/migrations/` directory
+
+### Step 3: Run Migrations
+
+```bash
+php artisan migrate
+```
+
+**What this creates:**
+- `sites` table - Stores your websites from Google Search Console
+- `pages` table - Stores all pages to be indexed
+- `indexing_jobs` table - Tracks indexing job queue
+- `sitemaps` table - Stores sitemap information
+- `indexing_status_history` table - Complete history of indexing status changes
+
+### Step 4: Set Up Google Service Account
+
+**Before proceeding, make sure you've completed the Prerequisites section above.**
+
+1. **Download Service Account JSON file** from Google Cloud Console
+2. **Place it in a secure location** (e.g., `storage/app/google-service-account.json`)
+3. **Add Service Account email to Google Search Console** as Owner:
+   - Go to [Google Search Console](https://search.google.com/search-console)
+   - Select your property → Settings → Users and permissions
+   - Add the service account email (found in the JSON file)
+   - Grant **Owner** permissions
+
+### Step 5: Configure Environment Variables
 
 Add to your `.env` file:
 
 ```env
-# Google API Configuration
-GOOGLE_SERVICE_ACCOUNT_PATH=/path/to/service-account.json
+# Google API Configuration (Required)
+# Use absolute path to your service account JSON file
+GOOGLE_SERVICE_ACCOUNT_PATH=/absolute/path/to/service-account.json
 
-# IndexNow Configuration
+# Example for Windows:
+# GOOGLE_SERVICE_ACCOUNT_PATH=E:\laravel\project\storage\app\google-service-account.json
+
+# Example for Linux/Mac:
+# GOOGLE_SERVICE_ACCOUNT_PATH=/var/www/html/storage/app/google-service-account.json
+
+# IndexNow Configuration (Optional but Recommended)
 INDEXNOW_ENABLED=true
 INDEXNOW_API_KEY=your-32-character-key
 
@@ -227,15 +274,57 @@ AUTO_INDEXING_ENABLED=true
 AUTO_INDEXING_SCHEDULE=daily
 ```
 
-### Step 4: Run Migrations
+**Important Notes:**
+- Use **absolute path** (full path) for `GOOGLE_SERVICE_ACCOUNT_PATH`
+- Make sure the JSON file is readable by your web server
+- Keep the JSON file secure and never commit it to version control
+
+### Step 6: Test the Connection
+
+Verify that everything is set up correctly:
 
 ```bash
-php artisan migrate
+# Check if commands are available
+php artisan list | grep page-indexer
+
+# Test connection by syncing sites from Google Search Console
+php artisan page-indexer:sync-sites
 ```
+
+**Expected Output:**
+- List of all available page-indexer commands
+- Successfully synced sites from Google Search Console
+- Sites saved to database
+
+If you see errors, check:
+- Service Account JSON file path is correct
+- Service Account has Owner permissions in Search Console
+- Google APIs are enabled (Indexing API & Search Console API)
+
+---
+
+## ✅ Installation Checklist
+
+Use this checklist to verify your installation:
+
+- [ ] Package installed via Composer
+- [ ] Configuration file published (`config/page-indexer.php` exists)
+- [ ] Migration files published (check `database/migrations/` directory)
+- [ ] Migrations run successfully (`php artisan migrate`)
+- [ ] Google Service Account JSON file downloaded
+- [ ] Service Account email added to Google Search Console as Owner
+- [ ] `GOOGLE_SERVICE_ACCOUNT_PATH` set in `.env` (absolute path)
+- [ ] IndexNow API key generated (optional)
+- [ ] `INDEXNOW_API_KEY` set in `.env` (optional)
+- [ ] Connection tested successfully (`php artisan page-indexer:sync-sites`)
+
+**All checked?** You're ready to use the library! 🎉
 
 ---
 
 ## 🚀 Quick Start
+
+> **Note:** Make sure you've completed all Installation steps above before proceeding.
 
 ### Step 1: Sync Your Sites from Google Search Console
 
@@ -248,6 +337,11 @@ This command will:
 - Fetch all your verified sites
 - Create records in the database
 - Display all synced sites
+
+**If this fails:**
+- Check your `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env`
+- Verify Service Account has Owner permissions in Search Console
+- Make sure Indexing API and Search Console API are enabled
 
 ### Step 2: Monitor Sitemaps and Discover Pages
 
