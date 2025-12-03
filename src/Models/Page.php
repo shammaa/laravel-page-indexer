@@ -98,5 +98,53 @@ class Page extends Model
             'metadata' => ['error' => $error],
         ]);
     }
+
+    /**
+     * Check if page is indexed.
+     */
+    public function isIndexed(): bool
+    {
+        return $this->indexing_status === 'indexed';
+    }
+
+    /**
+     * Check if page is pending indexing.
+     */
+    public function isPending(): bool
+    {
+        return $this->indexing_status === 'pending';
+    }
+
+    /**
+     * Check if page indexing failed.
+     */
+    public function hasFailed(): bool
+    {
+        return $this->indexing_status === 'failed';
+    }
+
+    /**
+     * Scope: Get indexed pages.
+     */
+    public function scopeIndexed($query)
+    {
+        return $query->where('indexing_status', 'indexed');
+    }
+
+    /**
+     * Scope: Get pending pages.
+     */
+    public function scopePending($query)
+    {
+        return $query->where('indexing_status', 'pending');
+    }
+
+    /**
+     * Scope: Get failed pages.
+     */
+    public function scopeFailed($query)
+    {
+        return $query->where('indexing_status', 'failed');
+    }
 }
 

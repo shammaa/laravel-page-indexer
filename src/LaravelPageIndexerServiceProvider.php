@@ -72,6 +72,8 @@ class LaravelPageIndexerServiceProvider extends ServiceProvider
                 Console\SyncSitesCommand::class,
                 Console\MonitorSitemapsCommand::class,
                 Console\AutoIndexCommand::class,
+                Console\CheckStatusCommand::class,
+                Console\BulkImportCommand::class,
             ]);
         }
     }

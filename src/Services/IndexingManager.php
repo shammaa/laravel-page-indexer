@@ -28,14 +28,11 @@ class IndexingManager
 
         // Submit to Google
         if ($method === 'google' || $method === 'both') {
-            if ($site->hasValidGoogleToken()) {
-                $result = $this->googleIndexingService->submitUrl(
-                    $url,
-                    'URL_UPDATED',
-                    $site->google_access_token
-                );
-                $results['google'] = $result;
-            }
+            $result = $this->googleIndexingService->submitUrl(
+                $url,
+                'URL_UPDATED'
+            );
+            $results['google'] = $result;
         }
 
         // Submit to IndexNow
@@ -68,15 +65,12 @@ class IndexingManager
 
         // Submit to Google
         if ($method === 'google' || $method === 'both') {
-            if ($site->hasValidGoogleToken()) {
-                $googleUrls = array_slice($urls, 0, 200); // Google limit
-                $result = $this->googleIndexingService->submitBulk(
-                    $googleUrls,
-                    'URL_UPDATED',
-                    $site->google_access_token
-                );
-                $results['google'] = $result;
-            }
+            $googleUrls = array_slice($urls, 0, 200); // Google limit
+            $result = $this->googleIndexingService->submitBulk(
+                $googleUrls,
+                'URL_UPDATED'
+            );
+            $results['google'] = $result;
         }
 
         // Submit to IndexNow
@@ -104,29 +98,20 @@ class IndexingManager
      */
     public function checkStatus(string $url, Site $site): array
     {
-        if (!$site->hasValidGoogleToken()) {
-            return [
-                'success' => false,
-                'error' => 'Invalid Google token',
-            ];
-        }
-
         return $this->searchConsoleService->inspectUrl(
             $site->google_site_url,
-            $url,
-            $site->google_access_token
+            $url
         );
     }
 
     /**
      * Sync sites from Google Search Console.
      *
-     * @param string|null $accessToken
      * @return array
      */
-    public function syncSites(?string $accessToken = null): array
+    public function syncSites(): array
     {
-        return $this->searchConsoleService->getSites($accessToken);
+        return $this->searchConsoleService->getSites();
     }
 
     /**
@@ -137,16 +122,8 @@ class IndexingManager
      */
     public function syncSitemaps(Site $site): array
     {
-        if (!$site->hasValidGoogleToken()) {
-            return [
-                'success' => false,
-                'error' => 'Invalid Google token',
-            ];
-        }
-
         return $this->searchConsoleService->getSitemaps(
-            $site->google_site_url,
-            $site->google_access_token
+            $site->google_site_url
         );
     }
 

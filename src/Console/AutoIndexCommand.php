@@ -76,9 +76,7 @@ class AutoIndexCommand extends Command
                 $engines = [];
                 
                 if ($method === 'google' || $method === 'both') {
-                    if ($site->hasValidGoogleToken()) {
-                        $engines[] = 'google';
-                    }
+                    $engines[] = 'google';
                 }
 
                 if ($method === 'indexnow' || $method === 'both') {

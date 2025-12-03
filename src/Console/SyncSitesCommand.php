@@ -14,7 +14,6 @@ class SyncSitesCommand extends Command
      * @var string
      */
     protected $signature = 'page-indexer:sync-sites 
-                            {--token= : Google OAuth access token}
                             {--force : Force sync even if site exists}';
 
     /**
@@ -32,8 +31,7 @@ class SyncSitesCommand extends Command
         $this->info('🔄 Syncing sites from Google Search Console...');
         $this->newLine();
 
-        $token = $this->option('token');
-        $result = $manager->syncSites($token);
+        $result = $manager->syncSites();
 
         if (!$result['success']) {
             $this->error('❌ Failed to sync sites: ' . ($result['error'] ?? 'Unknown error'));

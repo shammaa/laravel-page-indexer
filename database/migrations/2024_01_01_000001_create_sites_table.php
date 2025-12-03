@@ -16,9 +16,6 @@ return new class extends Migration
             $table->string('google_site_url')->unique()->comment('Site URL from Google Search Console');
             $table->string('name')->comment('Display name for the site');
             $table->boolean('auto_indexing_enabled')->default(false)->comment('Enable automatic indexing');
-            $table->text('google_access_token')->nullable()->comment('Google OAuth access token');
-            $table->text('google_refresh_token')->nullable()->comment('Google OAuth refresh token');
-            $table->timestamp('google_token_expires_at')->nullable()->comment('Token expiration timestamp');
             $table->string('indexnow_api_key', 64)->nullable()->comment('IndexNow API key');
             $table->json('settings')->nullable()->comment('Additional site settings');
             $table->timestamps();

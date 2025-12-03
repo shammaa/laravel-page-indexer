@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static array index(string $url, \Shammaa\LaravelPageIndexer\Models\Site $site, string $method = 'both')
  * @method static array bulkIndex(array $urls, \Shammaa\LaravelPageIndexer\Models\Site $site, string $method = 'both')
  * @method static array checkStatus(string $url, \Shammaa\LaravelPageIndexer\Models\Site $site)
- * @method static array syncSites(?string $accessToken = null)
+ * @method static array syncSites()
  * @method static array syncSitemaps(\Shammaa\LaravelPageIndexer\Models\Site $site)
  * @method static array parseSitemap(string $sitemapUrl)
  *

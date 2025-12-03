@@ -25,14 +25,14 @@ class GoogleIndexingService
         if ($this->client === null) {
             $this->client = new Google_Client();
             
-            if (file_exists($this->config['service_account_path'])) {
-                $this->client->setAuthConfig($this->config['service_account_path']);
-            } else {
-                $this->client->setClientId($this->config['client_id']);
-                $this->client->setClientSecret($this->config['client_secret']);
-                $this->client->setRedirectUri($this->config['redirect_uri']);
+            if (!file_exists($this->config['service_account_path'])) {
+                throw new \RuntimeException(
+                    'Google Service Account file not found at: ' . $this->config['service_account_path'] .
+                    '. Please set GOOGLE_SERVICE_ACCOUNT_PATH in your .env file.'
+                );
             }
-
+            
+            $this->client->setAuthConfig($this->config['service_account_path']);
             $this->client->addScope($this->config['scopes']);
         }
 
@@ -47,16 +47,11 @@ class GoogleIndexingService
      * @param string|null $accessToken
      * @return array
      */
-    public function submitUrl(string $url, string $type = 'URL_UPDATED', ?string $accessToken = null): array
+    public function submitUrl(string $url, string $type = 'URL_UPDATED'): array
     {
         try {
             $client = $this->getClient();
-
-            if ($accessToken) {
-                $client->setAccessToken($accessToken);
-            } else {
-                $client->fetchAccessTokenWithAssertion();
-            }
+            $client->fetchAccessTokenWithAssertion();
 
             $service = new Google_Service_Indexing($client);
             $notification = new Google_Service_Indexing_UrlNotification();
@@ -98,12 +93,12 @@ class GoogleIndexingService
      * @param string|null $accessToken
      * @return array
      */
-    public function submitBulk(array $urls, string $type = 'URL_UPDATED', ?string $accessToken = null): array
+    public function submitBulk(array $urls, string $type = 'URL_UPDATED'): array
     {
         $results = [];
 
         foreach ($urls as $url) {
-            $results[] = $this->submitUrl($url, $type, $accessToken);
+            $results[] = $this->submitUrl($url, $type);
             
             // Rate limiting: wait 1 second between requests
             usleep(1000000); // 1 second

@@ -49,11 +49,6 @@ class MonitorSitemapsCommand extends Command
 
         foreach ($sites as $site) {
             $this->info("🌐 Processing site: {$site->name} ({$site->google_site_url})");
-            
-            if (!$site->hasValidGoogleToken()) {
-                $this->warn("  ⚠️  Skipping: Invalid or missing Google token");
-                continue;
-            }
 
             // Sync sitemaps
             $result = $manager->syncSitemaps($site);

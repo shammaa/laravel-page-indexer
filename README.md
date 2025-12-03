@@ -124,11 +124,8 @@ Background processing ensures your application stays responsive. All indexing jo
 **Environment Variables:**
 ```env
 GOOGLE_SERVICE_ACCOUNT_PATH=/path/to/service-account.json
-# OR use OAuth 2.0:
-GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
-GOOGLE_REDIRECT_URI=https://yoursite.com/auth/google/callback
 ```
+Simply download the JSON file from Google Cloud Console and point to it.
 
 **Documentation:**
 - [Google Indexing API Guide](https://developers.google.com/search/apis/indexing-api/v3/using-api)
@@ -143,18 +140,13 @@ GOOGLE_REDIRECT_URI=https://yoursite.com/auth/google/callback
 **Setup Steps:**
 
 1. **Enable Search Console API**
-   - In your Google Cloud Project
+   - In your Google Cloud Project (same project where you created the Service Account)
    - Go to **APIs & Services** > **Library**
    - Search for "Google Search Console API"
    - Click **Enable**
    - **Link:** https://console.cloud.google.com/apis/library/webmasters.googleapis.com
 
-2. **OAuth 2.0 Setup (if not using Service Account)**
-   - Go to **APIs & Services** > **Credentials**
-   - Click **Create Credentials** > **OAuth client ID**
-   - Choose **Web application**
-   - Add authorized redirect URIs
-   - Save Client ID and Client Secret
+**Note:** The same Service Account used for Indexing API will work for Search Console API. Just make sure it's added as Owner in Search Console.
 
 **Documentation:**
 - [Search Console API Guide](https://developers.google.com/webmaster-tools/search-console-api-original/v1)
@@ -225,10 +217,6 @@ Add to your `.env` file:
 ```env
 # Google API Configuration
 GOOGLE_SERVICE_ACCOUNT_PATH=/path/to/service-account.json
-# OR OAuth 2.0:
-GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
-GOOGLE_REDIRECT_URI=https://yoursite.com/auth/google/callback
 
 # IndexNow Configuration
 INDEXNOW_ENABLED=true
@@ -355,19 +343,57 @@ Once auto-indexing is enabled, the system automatically:
 
 ### Check Indexing Status
 
+#### Check if a URL is Indexed
+
 ```php
 use Shammaa\LaravelPageIndexer\Models\Page;
 
 $page = Page::where('url', 'https://example.com/page')->first();
 
+// Quick check
+if ($page->isIndexed()) {
+    echo "✅ Indexed!";
+    echo "Indexed at: " . $page->last_indexed_at;
+}
+
 // Get current status
 $status = $page->indexing_status; // pending, submitted, indexed, failed
 
-// Get status history
+// Get status history (complete timeline)
 $history = $page->statusHistory()->orderBy('checked_at', 'desc')->get();
+foreach ($history as $entry) {
+    echo $entry->checked_at . ": " . $entry->status;
+}
 
-// Check via Search Console
-$status = PageIndexer::checkStatus('https://example.com/page', $site);
+// Check via Google Search Console (most accurate)
+$result = PageIndexer::checkStatus('https://example.com/page', $site);
+if ($result['success']) {
+    $coverageState = $result['inspectionResult']['indexStatusResult']->getCoverageState();
+    echo "Status: " . $coverageState; // INDEXED or NOT_INDEXED
+}
+
+// Using helper function
+if (is_url_indexed('https://example.com/page', $site)) {
+    echo "✅ Indexed!";
+}
+```
+
+#### Check Multiple Pages
+
+Use the command to check status for multiple pages:
+
+```bash
+# Check specific URL
+php artisan page-indexer:check-status "https://example.com/page"
+
+# Check 100 pages
+php artisan page-indexer:check-status --limit=100
+
+# Check all pages (use with caution)
+php artisan page-indexer:check-status --all
+
+# Check with batches to avoid rate limiting
+php artisan page-indexer:check-status --limit=100 --batch=10
 ```
 
 ### Working with Models
@@ -390,6 +416,16 @@ $indexedPages = $site->pages()->where('indexing_status', 'indexed')->get();
 
 // Get page with history
 $page = Page::with('statusHistory')->find(1);
+
+// Use scopes for easier queries
+$indexed = Page::indexed()->count();
+$pending = Page::pending()->count();
+$failed = Page::failed()->count();
+
+// Check status
+if ($page->isIndexed()) {
+    echo "Indexed at: " . $page->last_indexed_at;
+}
 ```
 
 ---
@@ -403,7 +439,6 @@ php artisan page-indexer:sync-sites
 ```
 
 **Options:**
-- `--token=`: Provide Google OAuth access token manually
 - `--force`: Force sync even if site exists
 
 ### Monitor Sitemaps
@@ -427,6 +462,52 @@ php artisan page-indexer:auto-index
 - `--limit=100`: Maximum pages to index (default: 100)
 - `--method=both`: Indexing method (google, indexnow, both)
 
+### Check Indexing Status
+
+```bash
+# Check a specific URL
+php artisan page-indexer:check-status "https://example.com/page"
+
+# Check multiple pages
+php artisan page-indexer:check-status --limit=100
+
+# Check all pages
+php artisan page-indexer:check-status --all
+
+# Check with batches (recommended for large numbers)
+php artisan page-indexer:check-status --limit=1000 --batch=10
+```
+
+**Options:**
+- `url`: Specific URL to check (optional)
+- `--site-id=`: Check pages for specific site only
+- `--limit=`: Maximum number of pages to check (default: 100)
+- `--all`: Check all pages (ignores limit)
+- `--batch=`: Number of pages to check per batch (default: 10)
+
+### Bulk Import URLs
+
+Import large numbers of URLs from a file or comma-separated list:
+
+```bash
+# From file (one URL per line)
+php artisan page-indexer:bulk-import urls.txt --site-id=1
+
+# From comma-separated string
+php artisan page-indexer:bulk-import "url1,url2,url3" --site-id=1
+
+# Queue for later indexing
+php artisan page-indexer:bulk-import urls.txt --site-id=1 --queue
+```
+
+**Options:**
+- `urls`: Comma-separated URLs or path to file with URLs (one per line)
+- `--site-id=`: Site ID to associate URLs with
+- `--site-url=`: Site URL to find site automatically
+- `--queue`: Queue URLs for indexing instead of immediate processing
+- `--chunk=`: Process URLs in chunks (default: 100)
+- `--method=`: Indexing method (google, indexnow, both) - default: both
+
 ---
 
 ## ⚙️ Configuration
@@ -438,9 +519,6 @@ After publishing the config file, you can customize settings in `config/page-ind
 ```php
 'google' => [
     'service_account_path' => env('GOOGLE_SERVICE_ACCOUNT_PATH'),
-    'client_id' => env('GOOGLE_CLIENT_ID'),
-    'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-    'redirect_uri' => env('GOOGLE_REDIRECT_URI'),
     'scopes' => [
         'https://www.googleapis.com/auth/indexing',
         'https://www.googleapis.com/auth/webmasters.readonly',
@@ -539,7 +617,7 @@ PageIndexer::bulkIndex(array $urls, Site $site, string $method = 'both'): array
 PageIndexer::checkStatus(string $url, Site $site): array
 
 // Sync sites from Search Console
-PageIndexer::syncSites(?string $accessToken = null): array
+PageIndexer::syncSites(): array
 
 // Sync sitemaps for a site
 PageIndexer::syncSitemaps(Site $site): array
@@ -659,6 +737,7 @@ PageIndexer::index($newPageUrl, $site);
 
 ## 📖 Documentation
 
+- [Using with DataTable](DATATABLE_USAGE.md) - Complete guide for integrating with DataTable
 - [How It Works](HOW_IT_WORKS.md) - Detailed technical explanation
 - [Getting Started](GETTING_STARTED.md) - Step-by-step setup guide
 - [API Documentation](https://github.com/shammaa/laravel-page-indexer/wiki)

@@ -42,3 +42,46 @@ if (!function_exists('bulk_index')) {
     }
 }
 
+if (!function_exists('check_indexing_status')) {
+    /**
+     * Check indexing status for a URL.
+     *
+     * @param string $url
+     * @param \Shammaa\LaravelPageIndexer\Models\Site $site
+     * @return array
+     */
+    function check_indexing_status(string $url, $site)
+    {
+        return page_indexer()->checkStatus($url, $site);
+    }
+}
+
+if (!function_exists('is_url_indexed')) {
+    /**
+     * Check if a URL is indexed (returns boolean).
+     *
+     * @param string $url
+     * @param \Shammaa\LaravelPageIndexer\Models\Site $site
+     * @return bool
+     */
+    function is_url_indexed(string $url, $site): bool
+    {
+        $result = page_indexer()->checkStatus($url, $site);
+        
+        if (!$result['success']) {
+            return false;
+        }
+
+        $inspectionResult = $result['inspectionResult']['indexStatusResult'] ?? null;
+        
+        if (!$inspectionResult) {
+            return false;
+        }
+
+        $verdict = $inspectionResult->getVerdict() ?? 'unknown';
+        $coverageState = $inspectionResult->getCoverageState() ?? 'unknown';
+
+        return ($verdict === 'PASS' || $coverageState === 'INDEXED');
+    }
+}
+

@@ -19,18 +19,21 @@ class SearchConsoleService
     /**
      * Get authenticated Google Client.
      */
-    protected function getClient(?string $accessToken = null): Google_Client
+    protected function getClient(): Google_Client
     {
         if ($this->client === null) {
             $this->client = new Google_Client();
-            $this->client->setClientId($this->config['client_id']);
-            $this->client->setClientSecret($this->config['client_secret']);
-            $this->client->setRedirectUri($this->config['redirect_uri']);
+            
+            if (!file_exists($this->config['service_account_path'])) {
+                throw new \RuntimeException(
+                    'Google Service Account file not found at: ' . $this->config['service_account_path'] .
+                    '. Please set GOOGLE_SERVICE_ACCOUNT_PATH in your .env file.'
+                );
+            }
+            
+            $this->client->setAuthConfig($this->config['service_account_path']);
             $this->client->addScope($this->config['scopes']);
-        }
-
-        if ($accessToken) {
-            $this->client->setAccessToken($accessToken);
+            $this->client->fetchAccessTokenWithAssertion();
         }
 
         return $this->client;
@@ -39,13 +42,12 @@ class SearchConsoleService
     /**
      * Get all sites from Google Search Console.
      *
-     * @param string|null $accessToken
      * @return array
      */
-    public function getSites(?string $accessToken = null): array
+    public function getSites(): array
     {
         try {
-            $client = $this->getClient($accessToken);
+            $client = $this->getClient();
             $service = new Google_Service_Webmasters($client);
             $sites = $service->sites->listSites();
 
@@ -77,13 +79,12 @@ class SearchConsoleService
      * Get sitemaps for a site.
      *
      * @param string $siteUrl
-     * @param string|null $accessToken
      * @return array
      */
-    public function getSitemaps(string $siteUrl, ?string $accessToken = null): array
+    public function getSitemaps(string $siteUrl): array
     {
         try {
-            $client = $this->getClient($accessToken);
+            $client = $this->getClient();
             $service = new Google_Service_Webmasters($client);
             $sitemaps = $service->sitemaps->listSitemaps($siteUrl);
 
@@ -123,13 +124,12 @@ class SearchConsoleService
      *
      * @param string $siteUrl
      * @param string $inspectionUrl
-     * @param string|null $accessToken
      * @return array
      */
-    public function inspectUrl(string $siteUrl, string $inspectionUrl, ?string $accessToken = null): array
+    public function inspectUrl(string $siteUrl, string $inspectionUrl): array
     {
         try {
-            $client = $this->getClient($accessToken);
+            $client = $this->getClient();
             $service = new Google_Service_Webmasters($client);
 
             $inspectionRequest = new \Google_Service_Webmasters_UrlInspection_Index_Request();

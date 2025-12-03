@@ -13,23 +13,15 @@ class Site extends Model
         'google_site_url',
         'name',
         'auto_indexing_enabled',
-        'google_access_token',
-        'google_refresh_token',
-        'google_token_expires_at',
         'indexnow_api_key',
         'settings',
     ];
 
     protected $casts = [
         'auto_indexing_enabled' => 'boolean',
-        'google_token_expires_at' => 'datetime',
         'settings' => 'array',
     ];
 
-    protected $hidden = [
-        'google_access_token',
-        'google_refresh_token',
-    ];
 
     /**
      * Get all pages for this site.
@@ -47,21 +39,6 @@ class Site extends Model
         return $this->hasMany(Sitemap::class);
     }
 
-    /**
-     * Check if Google token is valid.
-     */
-    public function hasValidGoogleToken(): bool
-    {
-        if (!$this->google_access_token) {
-            return false;
-        }
-
-        if ($this->google_token_expires_at && $this->google_token_expires_at->isPast()) {
-            return false;
-        }
-
-        return true;
-    }
 
     /**
      * Check if IndexNow is configured.
