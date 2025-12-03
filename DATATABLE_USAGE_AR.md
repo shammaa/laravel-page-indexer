@@ -1,20 +1,20 @@
-# Using the Library with DataTable
+# استخدام المكتبة مع DataTable
 
-This guide explains how to use `laravel-page-indexer` with DataTable to add indexing buttons and display indexing status for each article.
+هذا الدليل يوضح كيفية استخدام `laravel-page-indexer` مع DataTable لإضافة أزرار فهرسة وعرض حالة الفهرس لكل مقالة.
 
 ---
 
-## 📋 Requirements
+## 📋 المتطلبات
 
 - Laravel 9.0+
-- Library: `shammaa/laravel-page-indexer`
-- DataTable (any library: jQuery DataTables, Laravel DataTables, etc.)
+- المكتبة: `shammaa/laravel-page-indexer`
+- DataTable (أي مكتبة: jQuery DataTables, Laravel DataTables, etc.)
 
 ---
 
-## 🚀 Step 1: Add Trait to Model
+## 🚀 الخطوة 1: إضافة Trait للموديل
 
-Add the `HasPageIndexing` Trait to your articles model:
+أضف Trait `HasPageIndexing` إلى موديل المقالات:
 
 ```php
 <?php
@@ -50,9 +50,9 @@ class Post extends Model
 
 ---
 
-## 🔌 Step 2: Add API Routes
+## 🔌 الخطوة 2: إضافة Routes للـ API
 
-Add routes in `routes/api.php` or `routes/web.php`:
+أضف routes في `routes/api.php` أو `routes/web.php`:
 
 ```php
 use Shammaa\LaravelPageIndexer\Http\Controllers\Api\PageIndexingController;
@@ -66,9 +66,9 @@ Route::prefix('api/page-indexer')->middleware('auth')->group(function () {
 
 ---
 
-## 💻 Step 3: Add Columns in DataTable
+## 💻 الخطوة 3: إضافة الأعمدة في DataTable
 
-### Example using Laravel DataTables (yajra/laravel-datatables)
+### مثال باستخدام Laravel DataTables (yajra/laravel-datatables)
 
 ```php
 <?php
@@ -92,17 +92,17 @@ class PostController extends Controller
                     $page = $post->indexed_page;
                     
                     if (!$page) {
-                        return '<span class="badge badge-secondary">Not Sent</span>';
+                        return '<span class="badge badge-secondary">غير مرسل</span>';
                     }
 
                     $badges = [
-                        'indexed' => '<span class="badge badge-success">✅ Indexed</span>',
-                        'submitted' => '<span class="badge badge-info">⏳ Sent</span>',
-                        'pending' => '<span class="badge badge-warning">⏳ Pending</span>',
-                        'failed' => '<span class="badge badge-danger">❌ Failed</span>',
+                        'indexed' => '<span class="badge badge-success">✅ مؤرشف</span>',
+                        'submitted' => '<span class="badge badge-info">⏳ تم الإرسال</span>',
+                        'pending' => '<span class="badge badge-warning">⏳ قيد الانتظار</span>',
+                        'failed' => '<span class="badge badge-danger">❌ فشل</span>',
                     ];
 
-                    $badge = $badges[$page->indexing_status] ?? '<span class="badge badge-secondary">Unknown</span>';
+                    $badge = $badges[$page->indexing_status] ?? '<span class="badge badge-secondary">غير معروف</span>';
                     
                     if ($page->last_indexed_at) {
                         $badge .= '<br><small class="text-muted">' . $page->last_indexed_at->diffForHumans() . '</small>';
@@ -116,7 +116,7 @@ class PostController extends Controller
                     $isIndexed = $page && $page->isIndexed();
                     
                     $btnClass = $isIndexed ? 'btn-success' : 'btn-primary';
-                    $btnText = $isIndexed ? '✅ Indexed' : '🚀 Send for Indexing';
+                    $btnText = $isIndexed ? '✅ مؤرشف' : '🚀 أرسل للفهرسة';
                     $btnDisabled = $isIndexed ? 'disabled' : '';
 
                     return sprintf(
@@ -141,18 +141,18 @@ class PostController extends Controller
 
 ---
 
-## 🎨 Step 4: Add JavaScript for DataTable
+## 🎨 الخطوة 4: إضافة JavaScript للـ DataTable
 
-Add the following code in your Blade view:
+أضف الكود التالي في Blade view:
 
 ```html
 <!-- DataTable -->
 <table id="posts-table" class="table table-striped">
     <thead>
         <tr>
-            <th>Title</th>
-            <th>Indexing Status</th>
-            <th>Actions</th>
+            <th>العنوان</th>
+            <th>حالة الفهرس</th>
+            <th>الإجراءات</th>
         </tr>
     </thead>
 </table>
@@ -169,18 +169,18 @@ $(document).ready(function() {
             { data: 'indexing_action', name: 'indexing_action', orderable: false, searchable: false },
         ],
         language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/en.json'
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/ar.json'
         }
     });
 });
 
-// Function to send URL for indexing
+// دالة إرسال URL للفهرسة
 function indexUrl(button, url) {
     if ($(button).hasClass('disabled')) {
         return;
     }
 
-    $(button).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Sending...');
+    $(button).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> جاري الإرسال...');
 
     $.ajax({
         url: '/api/page-indexer/index',
@@ -198,37 +198,37 @@ function indexUrl(button, url) {
                 // Show success message
                 Swal.fire({
                     icon: 'success',
-                    title: 'Sent Successfully!',
-                    text: response.message || 'Article sent for indexing successfully',
+                    title: 'تم الإرسال بنجاح!',
+                    text: response.message || 'تم إرسال المقالة للفهرسة بنجاح',
                     timer: 2000,
                     showConfirmButton: false
                 });
 
                 // Update button
                 $(button).removeClass('btn-primary').addClass('btn-success')
-                    .html('✅ Sent').prop('disabled', true);
+                    .html('✅ تم الإرسال').prop('disabled', true);
 
                 // Reload table to update status
                 $('#posts-table').DataTable().ajax.reload(null, false);
             } else {
-                throw new Error(response.error || 'An error occurred');
+                throw new Error(response.error || 'حدث خطأ');
             }
         },
         error: function(xhr) {
-            var error = xhr.responseJSON?.error || 'An error occurred while sending';
+            var error = xhr.responseJSON?.error || 'حدث خطأ أثناء الإرسال';
             
             Swal.fire({
                 icon: 'error',
-                title: 'Error!',
+                title: 'خطأ!',
                 text: error
             });
 
-            $(button).prop('disabled', false).html('🚀 Send for Indexing');
+            $(button).prop('disabled', false).html('🚀 أرسل للفهرسة');
         }
     });
 }
 
-// Function to check indexing status
+// دالة التحقق من حالة الفهرس
 function checkIndexingStatus(url) {
     $.ajax({
         url: '/api/page-indexer/status',
@@ -244,19 +244,19 @@ function checkIndexingStatus(url) {
 
                 switch(status) {
                     case 'indexed':
-                        badge = '<span class="badge badge-success">✅ Indexed</span>';
+                        badge = '<span class="badge badge-success">✅ مؤرشف</span>';
                         break;
                     case 'submitted':
-                        badge = '<span class="badge badge-info">⏳ Sent</span>';
+                        badge = '<span class="badge badge-info">⏳ تم الإرسال</span>';
                         break;
                     case 'pending':
-                        badge = '<span class="badge badge-warning">⏳ Pending</span>';
+                        badge = '<span class="badge badge-warning">⏳ قيد الانتظار</span>';
                         break;
                     case 'failed':
-                        badge = '<span class="badge badge-danger">❌ Failed</span>';
+                        badge = '<span class="badge badge-danger">❌ فشل</span>';
                         break;
                     default:
-                        badge = '<span class="badge badge-secondary">Unknown</span>';
+                        badge = '<span class="badge badge-secondary">غير معروف</span>';
                 }
 
                 // Update status in table
@@ -266,7 +266,7 @@ function checkIndexingStatus(url) {
     });
 }
 
-// Check indexing status every 30 seconds for pending articles
+// التحقق من حالة الفهرس كل 30 ثانية للمقالات المعلقة
 setInterval(function() {
     $('[data-status="pending"], [data-status="submitted"]').each(function() {
         var url = $(this).data('url');
@@ -280,7 +280,7 @@ setInterval(function() {
 
 ---
 
-## 📊 Step 5: Complete Example with Blade View
+## 📊 الخطوة 5: مثال كامل مع Blade View
 
 ```blade
 @extends('layouts.admin')
@@ -289,8 +289,8 @@ setInterval(function() {
 <div class="container-fluid">
     <div class="row mb-3">
         <div class="col-md-12">
-            <h2>Articles</h2>
-            <button class="btn btn-primary" onclick="bulkIndex()">🚀 Index All Pending Articles</button>
+            <h2>المقالات</h2>
+            <button class="btn btn-primary" onclick="bulkIndex()">🚀 فهرس جميع المقالات المعلقة</button>
         </div>
     </div>
 
@@ -302,9 +302,9 @@ setInterval(function() {
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Title</th>
-                                <th>Indexing Status</th>
-                                <th>Actions</th>
+                                <th>العنوان</th>
+                                <th>حالة الفهرس</th>
+                                <th>الإجراءات</th>
                             </tr>
                         </thead>
                     </table>
@@ -317,23 +317,23 @@ setInterval(function() {
 
 @push('scripts')
 <script>
-// ... Previous code ...
+// ... الكود السابق ...
 </script>
 @endpush
 ```
 
 ---
 
-## 🔧 Step 6: Using Helper Functions
+## 🔧 الخطوة 6: استخدام Helper Functions
 
-You can also use Helper Functions directly in the Controller:
+يمكنك أيضاً استخدام Helper Functions مباشرة في Controller:
 
 ```php
 use function Shammaa\LaravelPageIndexer\index_page;
 use function Shammaa\LaravelPageIndexer\check_indexing_status;
 use function Shammaa\LaravelPageIndexer\is_url_indexed;
 
-// In Controller
+// في Controller
 $site = Site::first();
 
 // Index a URL
@@ -350,10 +350,10 @@ $status = check_indexing_status($post->getIndexableUrl(), $site);
 
 ---
 
-## 🎯 Step 7: Using Trait Methods
+## 🎯 الخطوة 7: استخدام Trait Methods
 
 ```php
-// In Controller or Model
+// في Controller أو Model
 $post = Post::find(1);
 
 // Index URL
@@ -373,31 +373,31 @@ if ($post->isIndexed()) {
 
 ---
 
-## ⚠️ Important Notes
+## ⚠️ ملاحظات مهمة
 
-1. **Queue Processing**: Use `queue: true` for large operations to avoid slowing down responses
-2. **Rate Limiting**: Google Indexing API has a limit of 200 URLs per day
-3. **Background Jobs**: Make sure to run `php artisan queue:work`
-4. **Site Configuration**: Make sure Site is configured correctly before use
+1. **Queue Processing**: استخدم `queue: true` للعمليات الضخمة لتفادي إبطاء الاستجابة
+2. **Rate Limiting**: Google Indexing API له حد 200 URL يومياً
+3. **Background Jobs**: تأكد من تشغيل `php artisan queue:work`
+4. **Site Configuration**: تأكد من إعداد Site بشكل صحيح قبل الاستخدام
 
 ---
 
-## 🔄 Automatic Status Updates
+## 🔄 تحديث تلقائي للحالة
 
-For automatic status updates, you can use Polling:
+للتحديث التلقائي للحالة، يمكنك استخدام Polling:
 
 ```javascript
-// Update indexing status every minute
+// تحديث حالة الفهرس كل دقيقة
 setInterval(function() {
     $('#posts-table').DataTable().ajax.reload(null, false);
 }, 60000);
 ```
 
-Or use WebSockets for instant updates.
+أو استخدام WebSockets للحصول على تحديثات فورية.
 
 ---
 
-## 📚 More Examples
+## 📚 المزيد من الأمثلة
 
-See the `README.md` file for complete details about all available features.
+راجع ملف `README.md` للتفاصيل الكاملة حول جميع الميزات المتاحة.
 
