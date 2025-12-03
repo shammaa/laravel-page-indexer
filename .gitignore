@@ -9,6 +9,9 @@ composer.lock
 *.env
 storage/*.key
 
-# Arabic explanation file (personal use only)
+# Personal documentation files (not for GitHub)
 EXPLANATION_AR.md
+SUMMARY.md
+HOW_IT_WORKS.md
+GETTING_STARTED.md
 
