@@ -3,46 +3,68 @@
 [![Latest Version](https://img.shields.io/badge/latest-v1.2.0-blue.svg)](https://github.com/shammaa/laravel-page-indexer)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Laravel](https://img.shields.io/badge/laravel-9.0%2B-red.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/php-8.1%2B-purple.svg)](https://php.net)
 
-**Professional automated page indexing tool for Laravel** - Submit and monitor pages to Google, Bing, Yandex, and other search engines automatically. Get your pages indexed within 24-48 hours instead of waiting weeks or months.
+**Professional automated page indexing tool for Laravel** - Automatically submit and monitor your website pages to Google, Bing, Yandex, and other search engines. Get your pages indexed within 24-48 hours instead of waiting weeks or months.
+
+---
+
+## 📋 Table of Contents
+
+- [Overview](#-overview)
+- [Key Features](#-key-features)
+- [Two Usage Modes](#-two-usage-modes)
+- [Requirements](#-requirements)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Usage Guide](#-usage-guide)
+- [Artisan Commands](#-artisan-commands)
+- [API Reference](#-api-reference)
+- [Database Structure](#-database-structure)
+- [Best Practices](#-best-practices)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## 🎯 Overview
+
+**Laravel Page Indexer** is a comprehensive solution for automating the entire page indexing workflow. Instead of manually submitting URLs or waiting for search engines to discover your content naturally, this package handles everything automatically.
+
+### What It Does
+
+- ✅ **Submits pages to Google** via Google Indexing API (fastest method - 24-48 hours)
+- ✅ **Submits to multiple search engines** (Bing, Yandex, Naver) via IndexNow API
+- ✅ **Monitors sitemaps** automatically and discovers new pages
+- ✅ **Tracks indexing status** with complete history and timeline
+- ✅ **Runs completely automatically** - set it up once and forget it
+
+### The Problem It Solves
+
+**Without Laravel Page Indexer:**
+- ❌ Pages take weeks or months to get indexed naturally
+- ❌ Manual submission is tedious and time-consuming
+- ❌ No way to track indexing status or history
+- ❌ Missing organic traffic due to delayed indexing
+
+**With Laravel Page Indexer:**
+- ✅ **Pages indexed in 24-48 hours** automatically
+- ✅ **Zero manual work** - fully automated workflow
+- ✅ **Complete status tracking** with timeline history
+- ✅ **Increased organic traffic** from faster indexing
 
 > **📌 Important:** This package is designed to work with **one website per installation**. The "site" refers to **your website** (e.g., `https://example.com/`), not Google Search Console sites. Site configuration is stored in your `.env` file, not in the database. If you need to manage multiple websites, you'll need separate installations for each.
 
 ---
 
-## 🎯 What This Package Does
-
-This package automates the entire process of getting your website pages indexed by search engines. Instead of manually submitting URLs or waiting for search engines to crawl your site naturally, **Laravel Page Indexer** does everything automatically:
-
-- ✅ **Submits new pages to Google** via Google Indexing API (within 24-48 hours)
-- ✅ **Submits to multiple search engines** (Bing, Yandex, Naver) via IndexNow API
-- ✅ **Monitors your sitemaps** automatically and discovers new pages
-- ✅ **Tracks indexing status** with complete history and timeline
-- ✅ **Runs completely automatically** - set it up once and forget it
-
-### 🚀 Key Benefits
-
-**Before Laravel Page Indexer:**
-- ❌ Pages take weeks or months to get indexed
-- ❌ Manual submission is tedious and time-consuming
-- ❌ No way to track indexing status
-- ❌ Missing organic traffic due to delayed indexing
-
-**With Laravel Page Indexer:**
-- ✅ **Pages indexed in 24-48 hours** automatically
-- ✅ **Zero manual work** - fully automated
-- ✅ **Complete status tracking** with timeline history
-- ✅ **Increased organic traffic** from faster indexing
-
----
-
-## ✨ Features
+## ✨ Key Features
 
 ### 🔍 Google Indexing API Integration
-Automatically submit pages to Google using their official Indexing API. This is the fastest way to get your pages indexed by Google - typically within 24-48 hours.
+Submit pages directly to Google using their official Indexing API. This is the fastest way to get your pages indexed by Google - typically within 24-48 hours.
 
 ### 📊 Google Search Console Integration
-Seamlessly sync your sitemaps directly from Google Search Console. Configure your site URL once in config file.
+Seamlessly sync your sitemaps directly from Google Search Console. Configure your site URL once and the package handles the rest.
 
 ### 🚀 IndexNow API Support
 Submit pages to multiple search engines at once: Bing, Yandex, Naver, DuckDuckGo, and more using the open IndexNow protocol.
@@ -69,62 +91,99 @@ Background processing ensures your application stays responsive. All indexing jo
 
 ---
 
-## 📋 Requirements
+## 🎯 Two Usage Modes
 
-- PHP 8.1 or higher
-- Laravel 9.0 or higher
-- Google Cloud Project with Indexing API enabled
-- Google Search Console account
-- Composer
+This package offers **two distinct ways** to use it, depending on your needs:
+
+### Mode 1: Direct Service Usage (Simple - No Database) ✅
+
+**Perfect for:** Simple projects that just need to submit URLs without tracking.
+
+**What you need:**
+- ✅ Only `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env` (for Google)
+- ❌ No migrations needed
+- ❌ No `GOOGLE_SITE_URL` needed
+- ❌ No `INDEXNOW_API_KEY` in `.env` (pass it directly as parameter)
+
+**Use when:**
+- You just need to submit URLs quickly
+- You don't need tracking or history
+- You want minimal setup
+- You're building a simple integration
+
+### Mode 2: Full Page Indexer (With Database Tracking) 📊
+
+**Perfect for:** Projects that need complete tracking, history, and statistics.
+
+**What you need:**
+- ✅ `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env`
+- ✅ `GOOGLE_SITE_URL` in `.env`
+- ✅ Run migrations (`php artisan migrate`)
+- ✅ `INDEXNOW_API_KEY` in `.env` (optional, but recommended)
+
+**Use when:**
+- You need complete status tracking
+- You want indexing history and statistics
+- You need automatic sitemap monitoring
+- You're building a comprehensive SEO solution
 
 ---
 
-## 🔑 Required API Keys & Setup
+## 📋 Requirements
 
-### 1. Google Indexing API
+- **PHP:** 8.1 or higher
+- **Laravel:** 9.0 or higher
+- **Google Cloud Project** with Indexing API enabled
+- **Google Search Console** account
+- **Composer**
+
+---
+
+## 🔑 API Setup & Prerequisites
+
+Before installing the package, you need to set up the required APIs:
+
+### 1. Google Indexing API Setup
 
 **Why:** To submit pages directly to Google (fastest indexing method).
 
-**Setup Steps:**
+#### Step 1: Create Google Cloud Project
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. **Link:** https://console.cloud.google.com/projectcreate
 
-1. **Create Google Cloud Project**
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select existing one
-   - **Link:** https://console.cloud.google.com/projectcreate
+#### Step 2: Enable Indexing API
+1. Navigate to **APIs & Services** > **Library**
+2. Search for "Indexing API"
+3. Click **Enable**
+4. **Link:** https://console.cloud.google.com/apis/library/indexing.googleapis.com
 
-2. **Enable Indexing API**
-   - Navigate to **APIs & Services** > **Library**
-   - Search for "Indexing API"
-   - Click **Enable**
-   - **Link:** https://console.cloud.google.com/apis/library/indexing.googleapis.com
+#### Step 3: Create Service Account
+1. Go to **APIs & Services** > **Credentials**
+2. Click **Create Credentials** > **Service Account**
+3. Fill in details and create
+4. **Link:** https://console.cloud.google.com/apis/credentials
 
-3. **Create Service Account**
-   - Go to **APIs & Services** > **Credentials**
-   - Click **Create Credentials** > **Service Account**
-   - Fill in details and create
-   - **Link:** https://console.cloud.google.com/apis/credentials
+#### Step 4: Download Service Account Key
+1. Click on the created service account
+2. Go to **Keys** tab
+3. Click **Add Key** > **Create new key**
+4. Choose **JSON** format
+5. Download and save securely
 
-4. **Download Service Account Key**
-   - Click on the created service account
-   - Go to **Keys** tab
-   - Click **Add Key** > **Create new key**
-   - Choose **JSON** format
-   - Download and save securely
+#### Step 5: Grant Owner Permission in Search Console
+1. Go to [Google Search Console](https://search.google.com/search-console)
+2. Select your property (website)
+3. Go to **Settings** > **Users and permissions**
+4. Click **Add User**
+5. Add the service account email (found in JSON file)
+6. Grant **Owner** permissions
+7. **Link:** https://search.google.com/search-console
 
-5. **Grant Owner Permission in Search Console**
-   - Go to [Google Search Console](https://search.google.com/search-console)
-   - Select your property (website)
-   - Go to **Settings** > **Users and permissions**
-   - Click **Add User**
-   - Add the service account email (found in JSON file)
-   - Grant **Owner** permissions
-   - **Link:** https://search.google.com/search-console
-
-**Environment Variables:**
+**Environment Variable:**
 ```env
-GOOGLE_SERVICE_ACCOUNT_PATH=/path/to/service-account.json
+GOOGLE_SERVICE_ACCOUNT_PATH=/absolute/path/to/service-account.json
 ```
-Simply download the JSON file from Google Cloud Console and point to it.
 
 **Documentation:**
 - [Google Indexing API Guide](https://developers.google.com/search/apis/indexing-api/v3/using-api)
@@ -132,18 +191,16 @@ Simply download the JSON file from Google Cloud Console and point to it.
 
 ---
 
-### 2. Google Search Console API
+### 2. Google Search Console API Setup
 
 **Why:** To automatically sync your sitemaps and check indexing status.
 
-**Setup Steps:**
-
-1. **Enable Search Console API**
-   - In your Google Cloud Project (same project where you created the Service Account)
-   - Go to **APIs & Services** > **Library**
-   - Search for "Google Search Console API"
-   - Click **Enable**
-   - **Link:** https://console.cloud.google.com/apis/library/webmasters.googleapis.com
+#### Enable Search Console API
+1. In your Google Cloud Project (same project where you created the Service Account)
+2. Go to **APIs & Services** > **Library**
+3. Search for "Google Search Console API"
+4. Click **Enable**
+5. **Link:** https://console.cloud.google.com/apis/library/webmasters.googleapis.com
 
 **Note:** The same Service Account used for Indexing API will work for Search Console API. Just make sure it's added as Owner in Search Console.
 
@@ -152,30 +209,28 @@ Simply download the JSON file from Google Cloud Console and point to it.
 
 ---
 
-### 3. IndexNow API Key (Optional - Only for Mode 2)
+### 3. IndexNow API Key Setup (Optional - Only for Mode 2)
 
 > **Note:** If you're using **Mode 1 (Direct Service Usage)**, you don't need to set `INDEXNOW_API_KEY` in `.env`. You can pass it directly as a parameter when calling the service.
 
 **Why:** To submit pages to Bing, Yandex, Naver, and other search engines (only needed for Mode 2 - Full Page Indexer).
 
-**Setup Steps:**
+#### Step 1: Generate API Key
+Create a random 32-character string:
+- Example: `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
+- Or use: `php artisan page-indexer:generate-indexnow-key` (if available)
 
-1. **Generate API Key**
-   - Create a random 32-character string
-   - Example: `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
-   - Or use: `php artisan page-indexer:generate-indexnow-key`
+#### Step 2: Create Verification File
+1. Create file: `{your-api-key}.txt`
+2. Place it in your website root directory (e.g., `public/`)
+3. File content: Just the API key (same value)
+4. Example: `public/a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6.txt`
 
-2. **Create Verification File**
-   - Create file: `{your-api-key}.txt`
-   - Place it in your website root directory
-   - File content: Just the API key (same value)
-   - Example: `public/a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6.txt`
+#### Step 3: Verify File is Accessible
+Test: `https://yoursite.com/a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6.txt`
+- Should return the API key
 
-3. **Verify File is Accessible**
-   - Test: `https://yoursite.com/a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6.txt`
-   - Should return the API key
-
-**Environment Variables (Only for Mode 2 - Full Page Indexer):**
+**Environment Variables (Only for Mode 2):**
 ```env
 INDEXNOW_API_KEY=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 ```
@@ -201,17 +256,6 @@ submit_to_indexnow($url, $host, 'your-api-key-here', 'bing');
 
 ## 📦 Installation
 
-**Complete installation guide - follow these steps in order:**
-
-1. Install package via Composer
-2. Publish configuration and migrations
-3. Run migrations to create database tables
-4. Set up Google Service Account (see Prerequisites above)
-5. Configure environment variables
-6. Test the connection
-
----
-
 ### Step 1: Install Package
 
 ```bash
@@ -224,7 +268,7 @@ composer require shammaa/laravel-page-indexer
 # Publish configuration file
 php artisan vendor:publish --tag=page-indexer-config
 
-# Publish migration files
+# Publish migration files (only needed for Mode 2)
 php artisan vendor:publish --tag=page-indexer-migrations
 ```
 
@@ -232,36 +276,28 @@ php artisan vendor:publish --tag=page-indexer-migrations
 - Creates `config/page-indexer.php` in your config directory
 - Copies migration files to `database/migrations/` directory
 
-### Step 3: Run Migrations
+### Step 3: Run Migrations (Mode 2 Only)
+
+If you're using **Mode 2 (Full Page Indexer)**, run migrations:
 
 ```bash
 php artisan migrate
 ```
 
 **What this creates:**
-- `pages` table - Stores all pages to be indexed
-- `indexing_jobs` table - Tracks indexing job queue
-- `sitemaps` table - Stores sitemap information
-- `indexing_status_history` table - Complete history of indexing status changes
+- `page_indexer_pages` - Stores all pages to be indexed
+- `page_indexer_jobs` - Tracks indexing job queue
+- `page_indexer_sitemaps` - Stores sitemap information
+- `page_indexer_status_history` - Complete history of indexing status changes
 
-### Step 4: Set Up Google Service Account
+> **Note:** If you're using **Mode 1**, you can skip this step.
 
-**Before proceeding, make sure you've completed the Prerequisites section above.**
-
-1. **Download Service Account JSON file** from Google Cloud Console
-2. **Place it in a secure location** (e.g., `storage/app/google-service-account.json`)
-3. **Add Service Account email to Google Search Console** as Owner:
-   - Go to [Google Search Console](https://search.google.com/search-console)
-   - Select your property → Settings → Users and permissions
-   - Add the service account email (found in the JSON file)
-   - Grant **Owner** permissions
-
-### Step 5: Configure Environment Variables
+### Step 4: Configure Environment Variables
 
 Add to your `.env` file:
 
 ```env
-# Google API Configuration (Required)
+# Google API Configuration (Required for both modes)
 # Use absolute path to your service account JSON file
 GOOGLE_SERVICE_ACCOUNT_PATH=/absolute/path/to/service-account.json
 
@@ -290,7 +326,7 @@ AUTO_INDEXING_SCHEDULE=daily
 - Make sure the JSON file is readable by your web server
 - Keep the JSON file secure and never commit it to version control
 
-### Step 6: Test the Connection
+### Step 5: Test the Connection
 
 Verify that everything is set up correctly:
 
@@ -298,7 +334,7 @@ Verify that everything is set up correctly:
 # Check if commands are available
 php artisan list | grep page-indexer
 
-# Test connection by listing sites from Google Search Console
+# Test connection by listing sites from Google Search Console (Mode 2)
 php artisan page-indexer:sync-sites
 ```
 
@@ -307,10 +343,10 @@ php artisan page-indexer:sync-sites
 - List of sites from Google Search Console (for reference)
 - Shows which site is configured in your `.env` file
 
-If you see errors, check:
-- Service Account JSON file path is correct
-- Service Account has Owner permissions in Search Console
-- Google APIs are enabled (Indexing API & Search Console API)
+**If you see errors:**
+- Check Service Account JSON file path is correct
+- Verify Service Account has Owner permissions in Search Console
+- Make sure Google APIs are enabled (Indexing API & Search Console API)
 
 ---
 
@@ -320,111 +356,25 @@ Use this checklist to verify your installation:
 
 - [ ] Package installed via Composer
 - [ ] Configuration file published (`config/page-indexer.php` exists)
-- [ ] Migration files published (check `database/migrations/` directory)
-- [ ] Migrations run successfully (`php artisan migrate`)
+- [ ] Migration files published (check `database/migrations/` directory) - **Mode 2 only**
+- [ ] Migrations run successfully (`php artisan migrate`) - **Mode 2 only**
 - [ ] Google Service Account JSON file downloaded
 - [ ] Service Account email added to Google Search Console as Owner
 - [ ] `GOOGLE_SERVICE_ACCOUNT_PATH` set in `.env` (absolute path)
 - [ ] `GOOGLE_SITE_URL` set in `.env` (your website URL) - **Only for Mode 2**
 - [ ] IndexNow API key generated (optional) - **Only for Mode 2**
 - [ ] `INDEXNOW_API_KEY` set in `.env` (optional) - **Only for Mode 2**
-- [ ] Connection tested successfully (`php artisan page-indexer:sync-sites`)
+- [ ] Connection tested successfully (`php artisan page-indexer:sync-sites`) - **Mode 2 only**
 
 **All checked?** You're ready to use the library! 🎉
 
 ---
 
-## 🚀 Quick Start
+## 💻 Usage Guide
 
-> **Note:** Make sure you've completed all Installation steps above before proceeding.
-
-### Step 1: Configure Your Site URL
-
-Make sure you've set `GOOGLE_SITE_URL` in your `.env` file:
-
-```env
-GOOGLE_SITE_URL=https://example.com/
-```
-
-**Important:** This should match the URL format you registered in Google Search Console (with or without trailing slash).
-
-### Step 2: Verify Your Site Configuration
-
-```bash
-php artisan page-indexer:sync-sites
-```
-
-This command will:
-- Connect to your Google Search Console
-- List all your verified sites
-- Show which site is currently configured in your `.env` file
-
-**If this fails:**
-- Check your `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env`
-- Verify Service Account has Owner permissions in Search Console
-- Make sure Indexing API and Search Console API are enabled
-
-### Step 3: Monitor Sitemaps and Discover Pages
-
-```bash
-php artisan page-indexer:monitor-sitemaps
-```
-
-This command will:
-- Fetch sitemaps from Search Console for your configured site
-- Parse all sitemap XML files
-- Extract all URLs
-- Create page records for new URLs
-
-### Step 4: Enable Auto-Indexing
-
-Enable auto-indexing in your `.env` file:
-
-```env
-AUTO_INDEXING_ENABLED=true
-```
-
-Or set it in `config/page-indexer.php`:
-
-```php
-'auto_indexing' => [
-    'enabled' => true,
-    // ...
-],
-```
-
-### Step 5: Run Auto-Indexing
-
-Add to your `app/Console/Kernel.php`:
-
-```php
-protected function schedule(Schedule $schedule)
-{
-    // Run auto-indexing daily
-    $schedule->command('page-indexer:auto-index')->daily();
-    
-    // Monitor sitemaps daily
-    $schedule->command('page-indexer:monitor-sitemaps')->daily();
-}
-```
-
----
-
-## 🎯 Usage Modes
-
-This package offers **two ways** to use it:
-
-### Mode 1: Direct Service Usage (Simple - No Database) ✅
+### Mode 1: Direct Service Usage (No Database)
 
 Use the services directly **without** database, migrations, or extra configuration.
-
-**What you need:**
-- ✅ Only `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env` (for Google)
-- ❌ No migrations needed
-- ❌ No `GOOGLE_SITE_URL` needed
-- ❌ No `INDEXNOW_API_KEY` in `.env` (pass it directly as parameter)
-
-**Perfect for:** Simple projects that just need to submit URLs without tracking.
 
 #### Using GoogleIndexingService
 
@@ -441,7 +391,7 @@ $results = GoogleIndexing::submitBulk([
 ]);
 
 // Or using helper function
-submit_to_google('https://example.com/page');
+$result = submit_to_google('https://example.com/page');
 ```
 
 **Response:**
@@ -475,7 +425,7 @@ $results = IndexNow::submitToMultiple(
 );
 
 // Or using helper function
-submit_to_indexnow(
+$result = submit_to_indexnow(
     'https://example.com/page',
     'https://example.com',
     'your-api-key-here',
@@ -514,34 +464,13 @@ if ($googleResult['success'] && $indexNowResult['success']) {
 
 ---
 
-### Mode 2: Full Page Indexer (With Database Tracking) 📊
+### Mode 2: Full Page Indexer (With Database Tracking)
 
 Use the complete package with database tracking, status monitoring, and statistics.
 
-**What you need:**
-- ✅ `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env`
-- ✅ `GOOGLE_SITE_URL` in `.env`
-- ✅ Run migrations (`php artisan migrate`)
-- ✅ `INDEXNOW_API_KEY` in `.env` (optional, but recommended)
+#### Manual Indexing
 
-**Perfect for:** Projects that need complete tracking, history, and statistics.
-
-**Features:**
-- 📊 Complete status tracking in database
-- 📈 Statistics and history
-- 🔄 Automatic sitemap monitoring
-- ⚡ Queue support for background processing
-- 📝 Full indexing history timeline
-
-See the sections below for full usage.
-
----
-
-## 💻 Usage
-
-### Manual Indexing
-
-#### Index a Single URL
+**Index a Single URL:**
 
 ```php
 use Shammaa\LaravelPageIndexer\Facades\PageIndexer;
@@ -556,7 +485,7 @@ $results = PageIndexer::index('https://example.com/page', 'google');
 $results = PageIndexer::index('https://example.com/page', 'indexnow');
 ```
 
-#### Bulk Indexing
+**Bulk Indexing:**
 
 ```php
 $urls = [
@@ -568,7 +497,7 @@ $urls = [
 $results = PageIndexer::bulkIndex($urls, 'both');
 ```
 
-### Automatic Indexing
+#### Automatic Indexing
 
 Once auto-indexing is enabled, the system automatically:
 
@@ -578,9 +507,30 @@ Once auto-indexing is enabled, the system automatically:
 4. **Submits to search engines** - Google and IndexNow
 5. **Tracks status** - Updates database with results
 
-### Check Indexing Status
+**Enable Auto-Indexing:**
 
-#### Check if a URL is Indexed
+```env
+AUTO_INDEXING_ENABLED=true
+```
+
+**Schedule Commands:**
+
+Add to your `app/Console/Kernel.php`:
+
+```php
+protected function schedule(Schedule $schedule)
+{
+    // Run auto-indexing daily
+    $schedule->command('page-indexer:auto-index')->daily();
+    
+    // Monitor sitemaps daily
+    $schedule->command('page-indexer:monitor-sitemaps')->daily();
+}
+```
+
+#### Check Indexing Status
+
+**Check if a URL is Indexed:**
 
 ```php
 use Shammaa\LaravelPageIndexer\Models\Page;
@@ -615,25 +565,7 @@ if (is_url_indexed('https://example.com/page')) {
 }
 ```
 
-#### Check Multiple Pages
-
-Use the command to check status for multiple pages:
-
-```bash
-# Check specific URL
-php artisan page-indexer:check-status "https://example.com/page"
-
-# Check 100 pages
-php artisan page-indexer:check-status --limit=100
-
-# Check all pages (use with caution)
-php artisan page-indexer:check-status --all
-
-# Check with batches to avoid rate limiting
-php artisan page-indexer:check-status --limit=100 --batch=10
-```
-
-### Working with Models
+**Working with Models:**
 
 ```php
 use Shammaa\LaravelPageIndexer\Models\Page;
@@ -659,6 +591,35 @@ $failed = Page::failed()->count();
 if ($page->isIndexed()) {
     echo "Indexed at: " . $page->last_indexed_at;
 }
+```
+
+#### Using with Eloquent Models
+
+You can add indexing functionality to your existing models:
+
+```php
+use Shammaa\LaravelPageIndexer\Traits\HasPageIndexing;
+
+class Post extends Model
+{
+    use HasPageIndexing;
+    
+    // ...
+}
+
+// Then use it:
+$post = Post::find(1);
+
+// Index the post URL
+$post->indexUrl();
+
+// Check if indexed
+if ($post->is_indexed) {
+    echo "Post is indexed!";
+}
+
+// Queue for indexing
+$post->queueIndexing();
 ```
 
 ---
@@ -811,44 +772,31 @@ After publishing the config file, you can customize settings in `config/page-ind
 ],
 ```
 
----
-
-## 📊 Database Structure
-
-The package creates 4 tables:
-
-1. **`page_indexer_pages`** - Stores all pages to be indexed
-2. **`page_indexer_jobs`** - Stores indexing job history
-3. **`page_indexer_sitemaps`** - Stores sitemap information
-4. **`page_indexer_status_history`** - Stores complete status timeline
-
-**Note:** Site configuration is stored in `config/page-indexer.php` and `.env` file, not in the database.
-
----
-
-## 🔄 Queue Configuration
-
-For large sites, it's recommended to use queues for background processing:
+### Queue Configuration
 
 ```php
-// In config/page-indexer.php or .env
 'queue' => [
     'connection' => env('PAGE_INDEXER_QUEUE_CONNECTION', 'default'),
     'queue' => env('PAGE_INDEXER_QUEUE', 'default'),
 ],
 ```
 
-Make sure your queue worker is running:
+### Cache Configuration
 
-```bash
-php artisan queue:work
+```php
+'cache' => [
+    'enabled' => env('PAGE_INDEXER_CACHE_ENABLED', true),
+    'ttl' => env('PAGE_INDEXER_CACHE_TTL', 3600), // 1 hour
+],
 ```
 
 ---
 
 ## 📚 API Reference
 
-### Facade Methods
+### Facades
+
+#### PageIndexer Facade (Mode 2)
 
 ```php
 use Shammaa\LaravelPageIndexer\Facades\PageIndexer;
@@ -870,6 +818,33 @@ PageIndexer::syncSitemaps(): array
 
 // Parse sitemap XML
 PageIndexer::parseSitemap(string $sitemapUrl): array
+```
+
+#### GoogleIndexing Facade (Mode 1)
+
+```php
+use Shammaa\LaravelPageIndexer\Facades\GoogleIndexing;
+
+// Submit single URL
+GoogleIndexing::submitUrl(string $url, string $type = 'URL_UPDATED'): array
+
+// Submit multiple URLs
+GoogleIndexing::submitBulk(array $urls, string $type = 'URL_UPDATED'): array
+```
+
+#### IndexNow Facade (Mode 1)
+
+```php
+use Shammaa\LaravelPageIndexer\Facades\IndexNow;
+
+// Submit to single endpoint
+IndexNow::submitUrl(string $url, string $host, string $apiKey, string $endpoint = 'bing', bool $enabled = true): array
+
+// Submit to multiple endpoints
+IndexNow::submitBulk(array $urls, string $host, string $apiKey, string $endpoint = 'bing', bool $enabled = true): array
+
+// Submit to multiple search engines
+IndexNow::submitToMultiple(array $urls, string $host, string $apiKey, array $endpoints = ['bing', 'yandex']): array
 ```
 
 ### Helper Functions
@@ -911,44 +886,88 @@ submit_to_indexnow(string $url, string $host, string $apiKey, string $endpoint =
 
 ---
 
-## 🎯 Real-World Example
+## 📊 Database Structure
 
-### Complete Setup Flow
+The package creates 4 tables (Mode 2 only):
+
+1. **`page_indexer_pages`** - Stores all pages to be indexed
+   - `id`, `url`, `indexing_status`, `last_indexed_at`, `created_at`, `updated_at`
+
+2. **`page_indexer_jobs`** - Stores indexing job history
+   - `id`, `page_id`, `job_id`, `status`, `method`, `created_at`, `updated_at`
+
+3. **`page_indexer_sitemaps`** - Stores sitemap information
+   - `id`, `sitemap_url`, `last_checked_at`, `url_count`, `created_at`, `updated_at`
+
+4. **`page_indexer_status_history`** - Stores complete status timeline
+   - `id`, `page_id`, `status`, `checked_at`, `created_at`
+
+**Note:** Site configuration is stored in `config/page-indexer.php` and `.env` file, not in the database.
+
+---
+
+## 🔄 Queue Configuration
+
+For large sites, it's recommended to use queues for background processing:
 
 ```php
-// 1. Configure your site URL in .env
-// GOOGLE_SITE_URL=https://example.com/
+// In config/page-indexer.php or .env
+'queue' => [
+    'connection' => env('PAGE_INDEXER_QUEUE_CONNECTION', 'default'),
+    'queue' => env('PAGE_INDEXER_QUEUE', 'default'),
+],
+```
 
-// 2. List sites from Search Console (verify configuration)
-php artisan page-indexer:sync-sites
+Make sure your queue worker is running:
 
-// 3. Monitor sitemaps (discovers pages)
-php artisan page-indexer:monitor-sitemaps
+```bash
+php artisan queue:work
+```
 
-// 4. Enable auto-indexing in .env
-// AUTO_INDEXING_ENABLED=true
+---
 
-// 5. Schedule commands in Kernel.php
+## 🎯 Best Practices
+
+### 1. Use Queue for Bulk Operations
+Always use queue for bulk operations to keep your application responsive:
+
+```php
+// Queue indexing instead of immediate processing
+PageIndexer::bulkIndex($urls, 'both', true); // third parameter = queue
+```
+
+### 2. Respect Rate Limits
+- Google: 200 URLs per day per site
+- IndexNow: No official limit, but don't abuse
+- Use batch processing for large numbers of URLs
+
+### 3. Monitor Status Regularly
+Check indexing status regularly to ensure pages are being indexed:
+
+```bash
+php artisan page-indexer:check-status --limit=100
+```
+
+### 4. Handle Errors Gracefully
+Check job failures and retry if needed:
+
+```bash
+php artisan queue:failed
+```
+
+### 5. Use Auto-Indexing for Continuous Monitoring
+Enable auto-indexing and schedule commands for hands-free operation:
+
+```php
+// In Kernel.php
 $schedule->command('page-indexer:monitor-sitemaps')->daily();
 $schedule->command('page-indexer:auto-index')->daily();
-
-// That's it! Everything runs automatically.
 ```
 
-### When a New Page is Published
-
-```php
-// After creating a new post/article
-use Shammaa\LaravelPageIndexer\Facades\PageIndexer;
-
-$newPageUrl = route('posts.show', $post);
-
-// Option 1: Index immediately
-PageIndexer::index($newPageUrl);
-
-// Option 2: Let auto-indexing handle it (next run)
-// Just publish the page, auto-indexing will pick it up
-```
+### 6. Keep Service Account Secure
+- Never commit Service Account JSON file to version control
+- Use absolute paths for `GOOGLE_SERVICE_ACCOUNT_PATH`
+- Restrict file permissions appropriately
 
 ---
 
@@ -968,12 +987,14 @@ PageIndexer::index($newPageUrl);
 - Supports multiple search engines
 - Requires API key verification file
 
-### Best Practices
+### Content Types
 
-1. **Use Queue** - Always use queue for bulk operations
-2. **Respect Rate Limits** - Don't exceed Google's limits
-3. **Monitor Status** - Check indexing status regularly
-4. **Handle Errors** - Check job failures and retry if needed
+Google Indexing API works best with:
+- Job Postings
+- Video content
+- Verified properties in Search Console
+
+For other content types, IndexNow is recommended.
 
 ---
 
@@ -985,6 +1006,7 @@ PageIndexer::index($newPageUrl);
 1. Check Service Account JSON file path
 2. Verify Service Account has Owner permissions in Search Console
 3. Clear config cache: `php artisan config:clear`
+4. Verify the JSON file is valid and readable
 
 ### "Sitemap not found" Error
 
@@ -992,19 +1014,106 @@ PageIndexer::index($newPageUrl);
 1. Ensure sitemap is submitted in Google Search Console
 2. Check sitemap URL is accessible
 3. Run: `php artisan page-indexer:monitor-sitemaps --force`
+4. Verify `GOOGLE_SITE_URL` matches your Search Console property
 
 ### Pages Not Getting Indexed
 
 **Check:**
 1. Auto-indexing is enabled (`AUTO_INDEXING_ENABLED=true` in `.env`)
 2. `GOOGLE_SITE_URL` is correctly set in `.env`
-3. Queue worker is running
+3. Queue worker is running (`php artisan queue:work`)
 4. Check job failures: `php artisan queue:failed`
 5. Check page status in database
+6. Verify Service Account has Owner permissions
+
+### "Service Account not found" Error
+
+**Solution:**
+1. Verify `GOOGLE_SERVICE_ACCOUNT_PATH` is set correctly (absolute path)
+2. Check file permissions (must be readable)
+3. Verify JSON file is valid
+4. Clear config cache: `php artisan config:clear`
+
+### IndexNow Verification Failed
+
+**Solution:**
+1. Verify API key file exists at `{api-key}.txt` in website root
+2. Check file is accessible via HTTP
+3. Verify file content matches API key exactly
+4. Check file permissions
 
 ---
 
-## 📖 Documentation
+## 🎯 Real-World Examples
+
+### Example 1: Blog Post Indexing
+
+```php
+// After creating a new blog post
+use Shammaa\LaravelPageIndexer\Facades\PageIndexer;
+
+$post = Post::create([...]);
+$postUrl = route('posts.show', $post);
+
+// Index immediately
+PageIndexer::index($postUrl, 'both');
+```
+
+### Example 2: E-commerce Product Indexing
+
+```php
+// After creating/updating a product
+$product = Product::create([...]);
+$productUrl = route('products.show', $product);
+
+// Index to both Google and IndexNow
+$result = PageIndexer::index($productUrl, 'both');
+
+if ($result['google']['success'] && $result['indexnow']['success']) {
+    // Log success
+    Log::info("Product indexed successfully: {$productUrl}");
+}
+```
+
+### Example 3: Bulk Indexing After Migration
+
+```php
+// After migrating content from another platform
+$urls = Product::pluck('slug')->map(function ($slug) {
+    return route('products.show', $slug);
+})->toArray();
+
+// Queue for background processing
+PageIndexer::bulkIndex($urls, 'both', true);
+```
+
+### Example 4: Using with Model Events
+
+```php
+use Shammaa\LaravelPageIndexer\Traits\HasPageIndexing;
+
+class Article extends Model
+{
+    use HasPageIndexing;
+    
+    protected static function booted()
+    {
+        static::created(function ($article) {
+            $article->queueIndexing();
+        });
+        
+        static::updated(function ($article) {
+            if ($article->wasChanged('published_at')) {
+                $article->queueIndexing();
+            }
+        });
+    }
+}
+```
+
+---
+
+## 📖 Additional Documentation
 
 - [Using with DataTable](DATATABLE_USAGE.md) - Complete guide for integrating with DataTable
 - [How It Works](HOW_IT_WORKS.md) - Detailed technical explanation
@@ -1016,6 +1125,12 @@ PageIndexer::index($newPageUrl);
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ---
 
