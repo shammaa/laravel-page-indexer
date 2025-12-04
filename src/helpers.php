@@ -81,3 +81,67 @@ if (!function_exists('is_url_indexed')) {
     }
 }
 
+// Direct service usage (without PageIndexer - no database, no config needed)
+
+if (!function_exists('google_indexing')) {
+    /**
+     * Get GoogleIndexingService instance for direct usage.
+     * 
+     * Usage: google_indexing()->submitUrl($url)
+     * 
+     * @return \Shammaa\LaravelPageIndexer\Services\GoogleIndexingService
+     */
+    function google_indexing()
+    {
+        return app(\Shammaa\LaravelPageIndexer\Services\GoogleIndexingService::class);
+    }
+}
+
+if (!function_exists('indexnow')) {
+    /**
+     * Get IndexNowService instance for direct usage.
+     * 
+     * Usage: indexnow()->submitUrl($url, $host, $apiKey)
+     * 
+     * @return \Shammaa\LaravelPageIndexer\Services\IndexNowService
+     */
+    function indexnow()
+    {
+        return app(\Shammaa\LaravelPageIndexer\Services\IndexNowService::class);
+    }
+}
+
+if (!function_exists('submit_to_google')) {
+    /**
+     * Submit URL directly to Google (without PageIndexer).
+     * 
+     * Only needs: GOOGLE_SERVICE_ACCOUNT_PATH in .env
+     * 
+     * @param string $url
+     * @param string $type 'URL_UPDATED' or 'URL_DELETED'
+     * @return array
+     */
+    function submit_to_google(string $url, string $type = 'URL_UPDATED'): array
+    {
+        return google_indexing()->submitUrl($url, $type);
+    }
+}
+
+if (!function_exists('submit_to_indexnow')) {
+    /**
+     * Submit URL directly to IndexNow (without PageIndexer).
+     * 
+     * No config needed - just pass parameters directly.
+     * 
+     * @param string $url
+     * @param string $host Domain host (e.g., 'https://example.com')
+     * @param string $apiKey IndexNow API key
+     * @param string $endpoint 'bing', 'yandex', 'naver' (default: 'bing')
+     * @return array
+     */
+    function submit_to_indexnow(string $url, string $host, string $apiKey, string $endpoint = 'bing'): array
+    {
+        return indexnow()->submitUrl($url, $host, $apiKey, $endpoint);
+    }
+}
+

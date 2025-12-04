@@ -31,7 +31,9 @@ class LaravelPageIndexerServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(IndexNowService::class, function ($app) {
-            return new IndexNowService(config('page-indexer.indexnow'));
+            // Allow IndexNowService to work without config (for direct usage)
+            $indexNowConfig = config('page-indexer.indexnow', []);
+            return new IndexNowService($indexNowConfig);
         });
 
         $this->app->singleton(SitemapService::class);

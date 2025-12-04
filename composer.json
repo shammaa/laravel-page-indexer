@@ -60,7 +60,9 @@
                 "Shammaa\\LaravelPageIndexer\\LaravelPageIndexerServiceProvider"
             ],
             "aliases": {
-                "PageIndexer": "Shammaa\\LaravelPageIndexer\\Facades\\PageIndexer"
+                "PageIndexer": "Shammaa\\LaravelPageIndexer\\Facades\\PageIndexer",
+                "GoogleIndexing": "Shammaa\\LaravelPageIndexer\\Facades\\GoogleIndexing",
+                "IndexNow": "Shammaa\\LaravelPageIndexer\\Facades\\IndexNow"
             }
         }
     },

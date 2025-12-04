@@ -25,14 +25,22 @@ class IndexNowService
      */
     public function submitUrl(string $url, string $host, string $apiKey, string $endpoint = 'bing'): array
     {
-        if (!$this->config['enabled']) {
+        // Check if IndexNow is disabled in config (if config exists)
+        if (isset($this->config['enabled']) && !$this->config['enabled']) {
             return [
                 'success' => false,
                 'error' => 'IndexNow is disabled',
             ];
         }
 
-        $endpointUrl = $this->config['endpoints'][$endpoint] ?? $this->config['endpoints']['bing'];
+        // Use endpoints from config if available, otherwise use defaults
+        $endpoints = $this->config['endpoints'] ?? [
+            'bing' => 'https://api.indexnow.org/IndexNow',
+            'yandex' => 'https://yandex.com/indexnow',
+            'naver' => 'https://searchadvisor.naver.com/indexnow',
+        ];
+        
+        $endpointUrl = $endpoints[$endpoint] ?? $endpoints['bing'];
 
         try {
             $response = Http::timeout(10)->post($endpointUrl, [
@@ -84,14 +92,22 @@ class IndexNowService
      */
     public function submitBulk(array $urls, string $host, string $apiKey, string $endpoint = 'bing'): array
     {
-        if (!$this->config['enabled']) {
+        // Check if IndexNow is disabled in config (if config exists)
+        if (isset($this->config['enabled']) && !$this->config['enabled']) {
             return [
                 'success' => false,
                 'error' => 'IndexNow is disabled',
             ];
         }
 
-        $endpointUrl = $this->config['endpoints'][$endpoint] ?? $this->config['endpoints']['bing'];
+        // Use endpoints from config if available, otherwise use defaults
+        $endpoints = $this->config['endpoints'] ?? [
+            'bing' => 'https://api.indexnow.org/IndexNow',
+            'yandex' => 'https://yandex.com/indexnow',
+            'naver' => 'https://searchadvisor.naver.com/indexnow',
+        ];
+        
+        $endpointUrl = $endpoints[$endpoint] ?? $endpoints['bing'];
 
         try {
             $response = Http::timeout(30)->post($endpointUrl, [
@@ -145,8 +161,15 @@ class IndexNowService
     {
         $results = [];
 
+        // Use endpoints from config if available, otherwise use defaults
+        $availableEndpoints = $this->config['endpoints'] ?? [
+            'bing' => 'https://api.indexnow.org/IndexNow',
+            'yandex' => 'https://yandex.com/indexnow',
+            'naver' => 'https://searchadvisor.naver.com/indexnow',
+        ];
+
         foreach ($endpoints as $endpoint) {
-            if (isset($this->config['endpoints'][$endpoint])) {
+            if (isset($availableEndpoints[$endpoint])) {
                 $results[$endpoint] = $this->submitBulk($urls, $host, $apiKey, $endpoint);
             }
         }

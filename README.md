@@ -401,6 +401,88 @@ protected function schedule(Schedule $schedule)
 
 ---
 
+## 🎯 Usage Modes
+
+This package offers **two ways** to use it:
+
+### Mode 1: Direct Service Usage (Simple - No Database) ✅
+
+Use the services directly **without** database, migrations, or extra configuration.
+
+**What you need:**
+- ✅ Only `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env` (for Google)
+- ✅ No migrations needed
+- ✅ No `GOOGLE_SITE_URL` needed
+- ✅ No `INDEXNOW_API_KEY` in `.env` (pass it directly)
+
+**Perfect for:** Simple projects that just need to submit URLs without tracking.
+
+#### Using GoogleIndexingService
+
+```php
+use Shammaa\LaravelPageIndexer\Facades\GoogleIndexing;
+
+// Submit single URL
+$result = GoogleIndexing::submitUrl('https://example.com/page');
+
+// Submit multiple URLs
+$results = GoogleIndexing::submitBulk([
+    'https://example.com/page1',
+    'https://example.com/page2',
+]);
+
+// Or using helper function
+submit_to_google('https://example.com/page');
+```
+
+#### Using IndexNowService
+
+```php
+use Shammaa\LaravelPageIndexer\Facades\IndexNow;
+
+// Submit to Bing
+$result = IndexNow::submitUrl(
+    'https://example.com/page',
+    'https://example.com',  // host
+    'your-api-key-here',    // IndexNow API key
+    'bing'                  // endpoint
+);
+
+// Submit to multiple search engines
+$results = IndexNow::submitToMultiple(
+    ['https://example.com/page1', 'https://example.com/page2'],
+    'https://example.com',
+    'your-api-key-here',
+    ['bing', 'yandex']
+);
+
+// Or using helper function
+submit_to_indexnow(
+    'https://example.com/page',
+    'https://example.com',
+    'your-api-key-here',
+    'bing'
+);
+```
+
+---
+
+### Mode 2: Full Page Indexer (With Database Tracking) 📊
+
+Use the complete package with database tracking, status monitoring, and statistics.
+
+**What you need:**
+- ✅ `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env`
+- ✅ `GOOGLE_SITE_URL` in `.env`
+- ✅ Run migrations
+- ✅ `INDEXNOW_API_KEY` in `.env` (optional)
+
+**Perfect for:** Projects that need complete tracking, history, and statistics.
+
+See the sections below for full usage.
+
+---
+
 ## 💻 Usage
 
 ### Manual Indexing
