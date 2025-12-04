@@ -411,9 +411,9 @@ Use the services directly **without** database, migrations, or extra configurati
 
 **What you need:**
 - ✅ Only `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env` (for Google)
-- ✅ No migrations needed
-- ✅ No `GOOGLE_SITE_URL` needed
-- ✅ No `INDEXNOW_API_KEY` in `.env` (pass it directly)
+- ❌ No migrations needed
+- ❌ No `GOOGLE_SITE_URL` needed
+- ❌ No `INDEXNOW_API_KEY` in `.env` (pass it directly as parameter)
 
 **Perfect for:** Simple projects that just need to submit URLs without tracking.
 
@@ -422,10 +422,10 @@ Use the services directly **without** database, migrations, or extra configurati
 ```php
 use Shammaa\LaravelPageIndexer\Facades\GoogleIndexing;
 
-// Submit single URL
+// Submit single URL to Google
 $result = GoogleIndexing::submitUrl('https://example.com/page');
 
-// Submit multiple URLs
+// Submit multiple URLs to Google
 $results = GoogleIndexing::submitBulk([
     'https://example.com/page1',
     'https://example.com/page2',
@@ -433,6 +433,15 @@ $results = GoogleIndexing::submitBulk([
 
 // Or using helper function
 submit_to_google('https://example.com/page');
+```
+
+**Response:**
+```php
+[
+    'success' => true,
+    'url' => 'https://example.com/page',
+    'notification' => [...]
+]
 ```
 
 #### Using IndexNowService
@@ -443,17 +452,17 @@ use Shammaa\LaravelPageIndexer\Facades\IndexNow;
 // Submit to Bing
 $result = IndexNow::submitUrl(
     'https://example.com/page',
-    'https://example.com',  // host
-    'your-api-key-here',    // IndexNow API key
-    'bing'                  // endpoint
+    'https://example.com',  // host (domain)
+    'your-api-key-here',    // IndexNow API key (pass directly)
+    'bing'                  // endpoint: 'bing', 'yandex', 'naver'
 );
 
-// Submit to multiple search engines
+// Submit to multiple search engines at once
 $results = IndexNow::submitToMultiple(
     ['https://example.com/page1', 'https://example.com/page2'],
     'https://example.com',
     'your-api-key-here',
-    ['bing', 'yandex']
+    ['bing', 'yandex']  // Submit to both Bing and Yandex
 );
 
 // Or using helper function
@@ -465,6 +474,35 @@ submit_to_indexnow(
 );
 ```
 
+**Response:**
+```php
+[
+    'success' => true,
+    'url' => 'https://example.com/page',
+    'endpoint' => 'bing',
+    'status' => 202
+]
+```
+
+#### Complete Example (Mode 1)
+
+```php
+// Submit to Google
+$googleResult = submit_to_google('https://example.com/page');
+
+// Submit to IndexNow (Bing, Yandex, etc.)
+$indexNowResult = submit_to_indexnow(
+    'https://example.com/page',
+    'https://example.com',
+    'your-indexnow-api-key',
+    'bing'
+);
+
+if ($googleResult['success'] && $indexNowResult['success']) {
+    echo "✅ Submitted to both Google and Bing!";
+}
+```
+
 ---
 
 ### Mode 2: Full Page Indexer (With Database Tracking) 📊
@@ -474,10 +512,17 @@ Use the complete package with database tracking, status monitoring, and statisti
 **What you need:**
 - ✅ `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env`
 - ✅ `GOOGLE_SITE_URL` in `.env`
-- ✅ Run migrations
-- ✅ `INDEXNOW_API_KEY` in `.env` (optional)
+- ✅ Run migrations (`php artisan migrate`)
+- ✅ `INDEXNOW_API_KEY` in `.env` (optional, but recommended)
 
 **Perfect for:** Projects that need complete tracking, history, and statistics.
+
+**Features:**
+- 📊 Complete status tracking in database
+- 📈 Statistics and history
+- 🔄 Automatic sitemap monitoring
+- ⚡ Queue support for background processing
+- 📝 Full indexing history timeline
 
 See the sections below for full usage.
 
@@ -820,6 +865,8 @@ PageIndexer::parseSitemap(string $sitemapUrl): array
 
 ### Helper Functions
 
+#### For Full Page Indexer (Mode 2)
+
 ```php
 // Get PageIndexer instance
 $indexer = page_indexer();
@@ -835,6 +882,22 @@ check_indexing_status(string $url): array
 
 // Check if URL is indexed (returns boolean)
 is_url_indexed(string $url): bool
+```
+
+#### For Direct Service Usage (Mode 1)
+
+```php
+// Get GoogleIndexingService instance
+$googleService = google_indexing();
+
+// Get IndexNowService instance
+$indexNowService = indexnow();
+
+// Submit to Google directly
+submit_to_google(string $url, string $type = 'URL_UPDATED'): array
+
+// Submit to IndexNow directly
+submit_to_indexnow(string $url, string $host, string $apiKey, string $endpoint = 'bing'): array
 ```
 
 ---
