@@ -152,9 +152,11 @@ Simply download the JSON file from Google Cloud Console and point to it.
 
 ---
 
-### 3. IndexNow API Key (Optional but Recommended)
+### 3. IndexNow API Key (Optional - Only for Mode 2)
 
-**Why:** To submit pages to Bing, Yandex, Naver, and other search engines.
+> **Note:** If you're using **Mode 1 (Direct Service Usage)**, you don't need to set `INDEXNOW_API_KEY` in `.env`. You can pass it directly as a parameter when calling the service.
+
+**Why:** To submit pages to Bing, Yandex, Naver, and other search engines (only needed for Mode 2 - Full Page Indexer).
 
 **Setup Steps:**
 
@@ -173,10 +175,15 @@ Simply download the JSON file from Google Cloud Console and point to it.
    - Test: `https://yoursite.com/a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6.txt`
    - Should return the API key
 
-**Environment Variables:**
+**Environment Variables (Only for Mode 2):**
 ```env
 INDEXNOW_ENABLED=true
 INDEXNOW_API_KEY=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+```
+
+**For Mode 1:** You don't need this in `.env`. Just pass the API key directly:
+```php
+submit_to_indexnow($url, $host, 'your-api-key-here', 'bing');
 ```
 
 **Documentation:**
@@ -263,15 +270,17 @@ GOOGLE_SERVICE_ACCOUNT_PATH=/absolute/path/to/service-account.json
 # Example for Linux/Mac:
 # GOOGLE_SERVICE_ACCOUNT_PATH=/var/www/html/storage/app/google-service-account.json
 
-# Site Configuration (Required)
+# Site Configuration (Required for Mode 2 only)
 # Your website URL as registered in Google Search Console
+# Note: Not needed for Mode 1 (Direct Service Usage)
 GOOGLE_SITE_URL=https://example.com/
 
-# IndexNow Configuration (Optional but Recommended)
+# IndexNow Configuration (Optional - Only for Mode 2)
+# Note: For Mode 1, pass API key directly as parameter
 INDEXNOW_ENABLED=true
 INDEXNOW_API_KEY=your-32-character-key
 
-# Auto-Indexing (Optional)
+# Auto-Indexing (Optional - Only for Mode 2)
 AUTO_INDEXING_ENABLED=true
 AUTO_INDEXING_SCHEDULE=daily
 ```
@@ -316,9 +325,9 @@ Use this checklist to verify your installation:
 - [ ] Google Service Account JSON file downloaded
 - [ ] Service Account email added to Google Search Console as Owner
 - [ ] `GOOGLE_SERVICE_ACCOUNT_PATH` set in `.env` (absolute path)
-- [ ] `GOOGLE_SITE_URL` set in `.env` (your website URL)
-- [ ] IndexNow API key generated (optional)
-- [ ] `INDEXNOW_API_KEY` set in `.env` (optional)
+- [ ] `GOOGLE_SITE_URL` set in `.env` (your website URL) - **Only for Mode 2**
+- [ ] IndexNow API key generated (optional) - **Only for Mode 2**
+- [ ] `INDEXNOW_API_KEY` set in `.env` (optional) - **Only for Mode 2**
 - [ ] Connection tested successfully (`php artisan page-indexer:sync-sites`)
 
 **All checked?** You're ready to use the library! 🎉
