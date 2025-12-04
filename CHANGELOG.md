@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2024-12-XX
+
+### Added
+- **Direct Service Usage Mode** - Use services without database or migrations
+- `GoogleIndexing` Facade for direct Google Indexing API usage
+- `IndexNow` Facade for direct IndexNow API usage
+- Helper functions: `google_indexing()`, `indexnow()`, `submit_to_google()`, `submit_to_indexnow()`
+- `IndexNowService` now works without config (takes parameters directly)
+- Support for using services independently without full package setup
+
+### Changed
+- `IndexNowService` can now work with or without config file
+- Improved README with detailed usage modes documentation
+- Added examples and response formats in documentation
+
+### Usage
+You can now use the package in two ways:
+1. **Mode 1:** Direct service usage (no database, no migrations) - just submit URLs
+2. **Mode 2:** Full package with database tracking and statistics
+
 ## [1.1.0] - 2024-12-XX
 
 ### Changed

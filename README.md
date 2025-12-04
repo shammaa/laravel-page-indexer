@@ -1,6 +1,6 @@
 # Laravel Page Indexer
 
-[![Latest Version](https://img.shields.io/badge/latest-v1.1.0-blue.svg)](https://github.com/shammaa/laravel-page-indexer)
+[![Latest Version](https://img.shields.io/badge/latest-v1.2.0-blue.svg)](https://github.com/shammaa/laravel-page-indexer)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Laravel](https://img.shields.io/badge/laravel-9.0%2B-red.svg)](https://laravel.com)
 
