@@ -5,9 +5,130 @@ namespace Shammaa\LaravelPageIndexer\Traits;
 use Shammaa\LaravelPageIndexer\Facades\PageIndexer;
 use Shammaa\LaravelPageIndexer\Models\Page;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Log;
 
 trait HasPageIndexing
 {
+    /**
+     * Whether to automatically index when model is created/updated.
+     * Set to false in your model to disable auto-indexing.
+     * 
+     * @var bool
+     */
+    protected $autoIndexOnCreate = true;
+    
+    /**
+     * Whether to automatically index when model is updated.
+     * Set to false in your model to disable auto-indexing on update.
+     * 
+     * @var bool
+     */
+    protected $autoIndexOnUpdate = true;
+    
+    /**
+     * Indexing method to use for auto-indexing.
+     * Options: 'google', 'indexnow', 'both'
+     * 
+     * @var string
+     */
+    protected $autoIndexMethod = 'both';
+    
+    /**
+     * Whether to queue auto-indexing jobs.
+     * Set to true to queue indexing instead of immediate processing.
+     * 
+     * @var bool
+     */
+    protected $autoIndexQueue = false;
+
+    /**
+     * Boot the trait and register model events.
+     */
+    public static function bootHasPageIndexing()
+    {
+        // Auto-index on create
+        static::created(function ($model) {
+            if ($model->shouldAutoIndexOnCreate() && $model->isPublished()) {
+                $model->autoIndex();
+            }
+        });
+
+        // Auto-index on update (if published)
+        static::updated(function ($model) {
+            if ($model->shouldAutoIndexOnUpdate() && $model->isPublished()) {
+                // Check if URL changed or status changed to published
+                if ($model->wasChanged('url') || $model->wasChanged('status') || $model->wasChanged('published_at')) {
+                    $model->autoIndex();
+                }
+            }
+        });
+    }
+
+    /**
+     * Check if auto-indexing should run on create.
+     * 
+     * @return bool
+     */
+    protected function shouldAutoIndexOnCreate(): bool
+    {
+        return $this->autoIndexOnCreate ?? true;
+    }
+
+    /**
+     * Check if auto-indexing should run on update.
+     * 
+     * @return bool
+     */
+    protected function shouldAutoIndexOnUpdate(): bool
+    {
+        return $this->autoIndexOnUpdate ?? true;
+    }
+
+    /**
+     * Check if the model is published and should be indexed.
+     * Override this method in your model to customize the logic.
+     * 
+     * @return bool
+     */
+    public function isPublished(): bool
+    {
+        // Check for common published status fields
+        if (isset($this->status)) {
+            return $this->status === 'published' || $this->status === 'active';
+        }
+
+        if (isset($this->is_published)) {
+            return (bool) $this->is_published;
+        }
+
+        if (isset($this->published_at)) {
+            return $this->published_at !== null && $this->published_at->isPast();
+        }
+
+        // If no published field exists, assume it's published
+        return true;
+    }
+
+    /**
+     * Automatically index this model.
+     * Called automatically on create/update if enabled.
+     * 
+     * @return array|null
+     */
+    public function autoIndex(): ?array
+    {
+        try {
+            return $this->indexUrl($this->autoIndexMethod ?? 'both', $this->autoIndexQueue ?? false);
+        } catch (\Exception $e) {
+            Log::error('Auto-indexing failed', [
+                'model' => get_class($this),
+                'id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
     /**
      * Get the Page model associated with this model.
      * 

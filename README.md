@@ -499,13 +499,22 @@ $results = PageIndexer::bulkIndex($urls, 'both');
 
 #### Automatic Indexing
 
-Once auto-indexing is enabled, the system automatically:
+The package offers **two levels** of automatic indexing:
 
-1. **Monitors sitemaps** - Checks for new pages daily
-2. **Discovers new URLs** - Compares with database
-3. **Queues for indexing** - Creates background jobs
-4. **Submits to search engines** - Google and IndexNow
-5. **Tracks status** - Updates database with results
+**Level 1: Immediate (via Trait) - No Scheduling Needed!**
+- ✅ When you create/update a post with `HasPageIndexing` trait, it **automatically** sends to Google immediately
+- ✅ No scheduling needed - works instantly when you save the model
+- ✅ Perfect for real-time indexing as you publish content
+
+**Level 2: Scheduled (via Commands) - For Bulk & Discovery**
+- ✅ **Monitors sitemaps** - Checks for new pages daily (discovers existing articles too!)
+- ✅ **Discovers new URLs** - Compares with database
+- ✅ **Queues for indexing** - Creates background jobs
+- ✅ **Submits to search engines** - Google and IndexNow
+- ✅ **Tracks status** - Updates database with results
+- ✅ **Checks status** - Verifies indexing status from Google
+
+> **💡 Best Practice:** Use both! Trait for immediate indexing of new posts, and scheduling for discovering existing articles and checking status.
 
 **Enable Auto-Indexing:**
 
@@ -515,18 +524,67 @@ AUTO_INDEXING_ENABLED=true
 
 **Schedule Commands:**
 
-Add to your `app/Console/Kernel.php`:
+#### Laravel 11: Use `bootstrap/app.php`
 
 ```php
+// bootstrap/app.php
+
+return Application::configure(basePath: dirname(__DIR__))
+    // ... other configuration
+    ->withSchedule(function ($schedule) {
+        // Send new articles every 10 minutes
+        $schedule->command('page-indexer:auto-index --limit=50')
+            ->everyTenMinutes()
+            ->withoutOverlapping();
+        
+        // Check indexing status every 10 minutes
+        $schedule->command('page-indexer:check-status --limit=50 --batch=10')
+            ->everyTenMinutes()
+            ->withoutOverlapping();
+        
+        // Monitor sitemaps daily
+        $schedule->command('page-indexer:monitor-sitemaps')->daily();
+    })
+    ->create();
+```
+
+#### Laravel 10 or below: Use `app/Console/Kernel.php`
+
+```php
+// app/Console/Kernel.php
+
 protected function schedule(Schedule $schedule)
 {
-    // Run auto-indexing daily
-    $schedule->command('page-indexer:auto-index')->daily();
+    // Send new articles every 10 minutes
+    $schedule->command('page-indexer:auto-index --limit=50')
+        ->everyTenMinutes()
+        ->withoutOverlapping();
+    
+    // Check indexing status every 10 minutes
+    $schedule->command('page-indexer:check-status --limit=50 --batch=10')
+        ->everyTenMinutes()
+        ->withoutOverlapping();
     
     // Monitor sitemaps daily
     $schedule->command('page-indexer:monitor-sitemaps')->daily();
 }
 ```
+
+**What This Does:**
+1. **Every 10 minutes:** Sends pending articles to Google and saves them to database
+2. **Every 10 minutes:** Checks status of submitted articles and updates database
+3. **Daily:** Monitors sitemaps for new URLs (discovers existing articles too!)
+
+**Result:** Fully automatic indexing with status updates stored in database!
+
+**Important:** You still need ONE Cron Job to run `php artisan schedule:run` every minute.
+
+> **📖 For detailed scheduling guide:** See [SCHEDULING_GUIDE.md](SCHEDULING_GUIDE.md) for:
+> - Complete scheduling examples
+> - How to discover existing articles
+> - Advanced scheduling options
+> - Cron Job setup instructions
+> - Best practices
 
 #### Check Indexing Status
 
@@ -593,7 +651,9 @@ if ($page->isIndexed()) {
 }
 ```
 
-#### Using with Eloquent Models
+#### Using with Eloquent Models (Automatic Indexing)
+
+> **✨ Automatic Indexing:** When you add `HasPageIndexing` trait to your model, it **automatically** sends articles to Google and saves them to database **immediately** when you create or update them. No manual code needed in your Controller!
 
 You can add indexing functionality to your existing models:
 
@@ -602,25 +662,77 @@ use Shammaa\LaravelPageIndexer\Traits\HasPageIndexing;
 
 class Post extends Model
 {
-    use HasPageIndexing;
+    use HasPageIndexing;  // ✅ This is all you need! Works automatically!
     
-    // ...
+    protected $fillable = ['title', 'slug', 'content', 'status', 'published_at'];
+    
+    // Optional: Customize auto-indexing behavior
+    protected $autoIndexOnCreate = true;  // Auto-index when created (default: true)
+    protected $autoIndexOnUpdate = true;  // Auto-index when updated (default: true)
+    protected $autoIndexMethod = 'both';  // 'google', 'indexnow', or 'both'
+    protected $autoIndexQueue = false;    // Set to true to queue instead of immediate
+    
+    // Optional: Override URL generation
+    public function getIndexableUrl(): string
+    {
+        return route('posts.show', $this->slug);
+    }
+    
+    // Optional: Override published check (if you have custom logic)
+    public function isPublished(): bool
+    {
+        return $this->status === 'published' && $this->published_at !== null;
+    }
 }
 
-// Then use it:
+// ============================================
+// Automatic Indexing (No Controller Code Needed!)
+// ============================================
+// When you create or update a post, it AUTOMATICALLY:
+// 1. ✅ Sends to Google for indexing
+// 2. ✅ Adds to database (page_indexer_pages table)
+// 3. ✅ Tracks status and history
+
+// In your Controller - Just create the post normally:
+$post = Post::create([
+    'title' => 'My New Article',
+    'slug' => 'my-new-article',
+    'content' => '...',
+    'status' => 'published',
+    'published_at' => now(),
+]);
+// ✅ Automatically indexed and added to database!
+// ✅ No additional code needed in Controller!
+
+// ============================================
+// Manual Indexing (if needed):
+// ============================================
 $post = Post::find(1);
 
-// Index the post URL
+// Index the post URL manually
 $post->indexUrl();
 
 // Check if indexed
-if ($post->is_indexed) {
+if ($post->isIndexed()) {
     echo "Post is indexed!";
 }
 
-// Queue for indexing
-$post->queueIndexing();
+// Get indexed page record
+$indexedPage = $post->indexed_page;
+echo "Status: " . $indexedPage->indexing_status;
+
+// Queue for indexing (background job)
+$post->indexUrl('both', true);
+
+// Check indexing status via Google
+$result = $post->checkIndexingStatus();
 ```
+
+**How It Works:**
+- The trait listens to `created` and `updated` events automatically
+- When a post is created/updated and is published, it automatically calls `autoIndex()`
+- `autoIndex()` sends to Google and saves to database - all automatically!
+- No need to add any code in your Controller - it just works! ✨
 
 ---
 
