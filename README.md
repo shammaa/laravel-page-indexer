@@ -175,13 +175,14 @@ Simply download the JSON file from Google Cloud Console and point to it.
    - Test: `https://yoursite.com/a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6.txt`
    - Should return the API key
 
-**Environment Variables (Only for Mode 2):**
+**Environment Variables (Only for Mode 2 - Full Page Indexer):**
 ```env
-INDEXNOW_ENABLED=true
 INDEXNOW_API_KEY=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 ```
 
-**For Mode 1:** You don't need this in `.env`. Just pass the API key directly:
+> **Note:** `INDEXNOW_ENABLED` is optional and defaults to `true`. You can set it to `false` in config if you want to disable IndexNow for Mode 2.
+
+**For Mode 1 (Direct Service Usage):** You don't need any IndexNow variables in `.env`. Just pass the API key directly as a parameter:
 ```php
 submit_to_indexnow($url, $host, 'your-api-key-here', 'bing');
 ```
@@ -276,8 +277,7 @@ GOOGLE_SERVICE_ACCOUNT_PATH=/absolute/path/to/service-account.json
 GOOGLE_SITE_URL=https://example.com/
 
 # IndexNow Configuration (Optional - Only for Mode 2)
-# Note: For Mode 1, pass API key directly as parameter
-INDEXNOW_ENABLED=true
+# Note: For Mode 1, pass API key directly as parameter (no .env needed)
 INDEXNOW_API_KEY=your-32-character-key
 
 # Auto-Indexing (Optional - Only for Mode 2)
