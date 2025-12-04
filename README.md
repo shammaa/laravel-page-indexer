@@ -1,10 +1,12 @@
 # Laravel Page Indexer
 
-[![Latest Version](https://img.shields.io/badge/latest-v1.0.0-blue.svg)](https://github.com/shammaa/laravel-page-indexer)
+[![Latest Version](https://img.shields.io/badge/latest-v1.1.0-blue.svg)](https://github.com/shammaa/laravel-page-indexer)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Laravel](https://img.shields.io/badge/laravel-9.0%2B-red.svg)](https://laravel.com)
 
 **Professional automated page indexing tool for Laravel** - Submit and monitor pages to Google, Bing, Yandex, and other search engines automatically. Get your pages indexed within 24-48 hours instead of waiting weeks or months.
+
+> **📌 Important:** This package is designed to work with **one website per installation**. The "site" refers to **your website** (e.g., `https://example.com/`), not Google Search Console sites. Site configuration is stored in your `.env` file, not in the database. If you need to manage multiple websites, you'll need separate installations for each.
 
 ---
 
@@ -40,7 +42,7 @@ This package automates the entire process of getting your website pages indexed 
 Automatically submit pages to Google using their official Indexing API. This is the fastest way to get your pages indexed by Google - typically within 24-48 hours.
 
 ### 📊 Google Search Console Integration
-Seamlessly sync your sites and sitemaps directly from Google Search Console. No manual configuration needed.
+Seamlessly sync your sitemaps directly from Google Search Console. Configure your site URL once in config file.
 
 ### 🚀 IndexNow API Support
 Submit pages to multiple search engines at once: Bing, Yandex, Naver, DuckDuckGo, and more using the open IndexNow protocol.
@@ -49,7 +51,7 @@ Submit pages to multiple search engines at once: Bing, Yandex, Naver, DuckDuckGo
 The package automatically monitors your XML sitemaps, discovers new pages, and queues them for indexing - completely hands-free.
 
 ### ⚡ Fully Automated Indexing
-Enable auto-indexing for a site and the package will:
+Enable auto-indexing and the package will:
 - Monitor sitemaps daily
 - Discover new pages automatically
 - Submit them to search engines
@@ -61,9 +63,6 @@ Track the indexing status of every page with a complete timeline history. Know e
 
 ### 🔄 Bulk Operations
 Index multiple pages at once with built-in queue support. Perfect for large sites with hundreds or thousands of pages.
-
-### 📱 Multi-Site Support
-Manage multiple websites from a single installation. Each site has its own settings, API keys, and indexing history.
 
 ### 🎯 Queue Support
 Background processing ensures your application stays responsive. All indexing jobs run in the background via Laravel queues.
@@ -135,7 +134,7 @@ Simply download the JSON file from Google Cloud Console and point to it.
 
 ### 2. Google Search Console API
 
-**Why:** To automatically sync your sites and sitemaps.
+**Why:** To automatically sync your sitemaps and check indexing status.
 
 **Setup Steps:**
 
@@ -232,7 +231,6 @@ php artisan migrate
 ```
 
 **What this creates:**
-- `sites` table - Stores your websites from Google Search Console
 - `pages` table - Stores all pages to be indexed
 - `indexing_jobs` table - Tracks indexing job queue
 - `sitemaps` table - Stores sitemap information
@@ -265,6 +263,10 @@ GOOGLE_SERVICE_ACCOUNT_PATH=/absolute/path/to/service-account.json
 # Example for Linux/Mac:
 # GOOGLE_SERVICE_ACCOUNT_PATH=/var/www/html/storage/app/google-service-account.json
 
+# Site Configuration (Required)
+# Your website URL as registered in Google Search Console
+GOOGLE_SITE_URL=https://example.com/
+
 # IndexNow Configuration (Optional but Recommended)
 INDEXNOW_ENABLED=true
 INDEXNOW_API_KEY=your-32-character-key
@@ -287,14 +289,14 @@ Verify that everything is set up correctly:
 # Check if commands are available
 php artisan list | grep page-indexer
 
-# Test connection by syncing sites from Google Search Console
+# Test connection by listing sites from Google Search Console
 php artisan page-indexer:sync-sites
 ```
 
 **Expected Output:**
 - List of all available page-indexer commands
-- Successfully synced sites from Google Search Console
-- Sites saved to database
+- List of sites from Google Search Console (for reference)
+- Shows which site is configured in your `.env` file
 
 If you see errors, check:
 - Service Account JSON file path is correct
@@ -314,6 +316,7 @@ Use this checklist to verify your installation:
 - [ ] Google Service Account JSON file downloaded
 - [ ] Service Account email added to Google Search Console as Owner
 - [ ] `GOOGLE_SERVICE_ACCOUNT_PATH` set in `.env` (absolute path)
+- [ ] `GOOGLE_SITE_URL` set in `.env` (your website URL)
 - [ ] IndexNow API key generated (optional)
 - [ ] `INDEXNOW_API_KEY` set in `.env` (optional)
 - [ ] Connection tested successfully (`php artisan page-indexer:sync-sites`)
@@ -326,7 +329,17 @@ Use this checklist to verify your installation:
 
 > **Note:** Make sure you've completed all Installation steps above before proceeding.
 
-### Step 1: Sync Your Sites from Google Search Console
+### Step 1: Configure Your Site URL
+
+Make sure you've set `GOOGLE_SITE_URL` in your `.env` file:
+
+```env
+GOOGLE_SITE_URL=https://example.com/
+```
+
+**Important:** This should match the URL format you registered in Google Search Console (with or without trailing slash).
+
+### Step 2: Verify Your Site Configuration
 
 ```bash
 php artisan page-indexer:sync-sites
@@ -334,47 +347,44 @@ php artisan page-indexer:sync-sites
 
 This command will:
 - Connect to your Google Search Console
-- Fetch all your verified sites
-- Create records in the database
-- Display all synced sites
+- List all your verified sites
+- Show which site is currently configured in your `.env` file
 
 **If this fails:**
 - Check your `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env`
 - Verify Service Account has Owner permissions in Search Console
 - Make sure Indexing API and Search Console API are enabled
 
-### Step 2: Monitor Sitemaps and Discover Pages
+### Step 3: Monitor Sitemaps and Discover Pages
 
 ```bash
 php artisan page-indexer:monitor-sitemaps
 ```
 
 This command will:
-- Fetch sitemaps for each site from Search Console
+- Fetch sitemaps from Search Console for your configured site
 - Parse all sitemap XML files
 - Extract all URLs
 - Create page records for new URLs
 
-### Step 3: Enable Auto-Indexing
+### Step 4: Enable Auto-Indexing
 
-Enable auto-indexing for a specific site:
+Enable auto-indexing in your `.env` file:
+
+```env
+AUTO_INDEXING_ENABLED=true
+```
+
+Or set it in `config/page-indexer.php`:
 
 ```php
-use Shammaa\LaravelPageIndexer\Models\Site;
-
-$site = Site::first();
-$site->update(['auto_indexing_enabled' => true]);
+'auto_indexing' => [
+    'enabled' => true,
+    // ...
+],
 ```
 
-Or enable via command:
-
-```bash
-php artisan tinker
->>> $site = \Shammaa\LaravelPageIndexer\Models\Site::first();
->>> $site->update(['auto_indexing_enabled' => true]);
-```
-
-### Step 4: Run Auto-Indexing
+### Step 5: Run Auto-Indexing
 
 Add to your `app/Console/Kernel.php`:
 
@@ -399,18 +409,15 @@ protected function schedule(Schedule $schedule)
 
 ```php
 use Shammaa\LaravelPageIndexer\Facades\PageIndexer;
-use Shammaa\LaravelPageIndexer\Models\Site;
-
-$site = Site::first();
 
 // Index to both Google and IndexNow
-$results = PageIndexer::index('https://example.com/page', $site, 'both');
+$results = PageIndexer::index('https://example.com/page', 'both');
 
 // Index to Google only
-$results = PageIndexer::index('https://example.com/page', $site, 'google');
+$results = PageIndexer::index('https://example.com/page', 'google');
 
 // Index to IndexNow only (Bing, Yandex, etc.)
-$results = PageIndexer::index('https://example.com/page', $site, 'indexnow');
+$results = PageIndexer::index('https://example.com/page', 'indexnow');
 ```
 
 #### Bulk Indexing
@@ -422,7 +429,7 @@ $urls = [
     'https://example.com/page3',
 ];
 
-$results = PageIndexer::bulkIndex($urls, $site, 'both');
+$results = PageIndexer::bulkIndex($urls, 'both');
 ```
 
 ### Automatic Indexing
@@ -460,14 +467,14 @@ foreach ($history as $entry) {
 }
 
 // Check via Google Search Console (most accurate)
-$result = PageIndexer::checkStatus('https://example.com/page', $site);
+$result = PageIndexer::checkStatus('https://example.com/page');
 if ($result['success']) {
     $coverageState = $result['inspectionResult']['indexStatusResult']->getCoverageState();
     echo "Status: " . $coverageState; // INDEXED or NOT_INDEXED
 }
 
 // Using helper function
-if (is_url_indexed('https://example.com/page', $site)) {
+if (is_url_indexed('https://example.com/page')) {
     echo "✅ Indexed!";
 }
 ```
@@ -493,20 +500,16 @@ php artisan page-indexer:check-status --limit=100 --batch=10
 ### Working with Models
 
 ```php
-use Shammaa\LaravelPageIndexer\Models\Site;
 use Shammaa\LaravelPageIndexer\Models\Page;
 
-// Get site
-$site = Site::where('google_site_url', 'https://example.com/')->first();
-
-// Get all pages for a site
-$pages = $site->pages;
+// Get all pages
+$pages = Page::all();
 
 // Get pending pages
-$pendingPages = $site->pages()->where('indexing_status', 'pending')->get();
+$pendingPages = Page::where('indexing_status', 'pending')->get();
 
 // Get indexed pages
-$indexedPages = $site->pages()->where('indexing_status', 'indexed')->get();
+$indexedPages = Page::where('indexing_status', 'indexed')->get();
 
 // Get page with history
 $page = Page::with('statusHistory')->find(1);
@@ -526,14 +529,13 @@ if ($page->isIndexed()) {
 
 ## 🛠️ Artisan Commands
 
-### Sync Sites from Google Search Console
+### List Sites from Google Search Console
 
 ```bash
 php artisan page-indexer:sync-sites
 ```
 
-**Options:**
-- `--force`: Force sync even if site exists
+This command lists all sites from Google Search Console and shows which one is configured in your `.env` file.
 
 ### Monitor Sitemaps
 
@@ -542,8 +544,9 @@ php artisan page-indexer:monitor-sitemaps
 ```
 
 **Options:**
-- `--site-id=`: Monitor specific site only
-- `--force`: Force re-check all sitemaps
+- `--force`: Force re-check all sitemaps (ignores 24-hour cache)
+
+This command monitors sitemaps for your configured site (set in `GOOGLE_SITE_URL`).
 
 ### Auto-Index Pending Pages
 
@@ -552,9 +555,10 @@ php artisan page-indexer:auto-index
 ```
 
 **Options:**
-- `--site-id=`: Index specific site only
 - `--limit=100`: Maximum pages to index (default: 100)
 - `--method=both`: Indexing method (google, indexnow, both)
+
+**Note:** Requires `AUTO_INDEXING_ENABLED=true` in your `.env` file.
 
 ### Check Indexing Status
 
@@ -574,7 +578,6 @@ php artisan page-indexer:check-status --limit=1000 --batch=10
 
 **Options:**
 - `url`: Specific URL to check (optional)
-- `--site-id=`: Check pages for specific site only
 - `--limit=`: Maximum number of pages to check (default: 100)
 - `--all`: Check all pages (ignores limit)
 - `--batch=`: Number of pages to check per batch (default: 10)
@@ -585,19 +588,17 @@ Import large numbers of URLs from a file or comma-separated list:
 
 ```bash
 # From file (one URL per line)
-php artisan page-indexer:bulk-import urls.txt --site-id=1
+php artisan page-indexer:bulk-import urls.txt
 
 # From comma-separated string
-php artisan page-indexer:bulk-import "url1,url2,url3" --site-id=1
+php artisan page-indexer:bulk-import "url1,url2,url3"
 
 # Queue for later indexing
-php artisan page-indexer:bulk-import urls.txt --site-id=1 --queue
+php artisan page-indexer:bulk-import urls.txt --queue
 ```
 
 **Options:**
 - `urls`: Comma-separated URLs or path to file with URLs (one per line)
-- `--site-id=`: Site ID to associate URLs with
-- `--site-url=`: Site URL to find site automatically
 - `--queue`: Queue URLs for indexing instead of immediate processing
 - `--chunk=`: Process URLs in chunks (default: 100)
 - `--method=`: Indexing method (google, indexnow, both) - default: both
@@ -607,6 +608,20 @@ php artisan page-indexer:bulk-import urls.txt --site-id=1 --queue
 ## ⚙️ Configuration
 
 After publishing the config file, you can customize settings in `config/page-indexer.php`:
+
+### Site Configuration
+
+```php
+'site' => [
+    'google_site_url' => env('GOOGLE_SITE_URL', ''),
+    'indexnow_api_key' => env('INDEXNOW_API_KEY', ''),
+],
+```
+
+**Important:** 
+- `google_site_url` should match the URL format you registered in Google Search Console
+- This is **your website URL** (e.g., `https://example.com/`), not a Google site
+- The package works with **one website** per installation
 
 ### Google API Configuration
 
@@ -664,13 +679,14 @@ After publishing the config file, you can customize settings in `config/page-ind
 
 ## 📊 Database Structure
 
-The package creates 5 tables:
+The package creates 4 tables:
 
-1. **`page_indexer_sites`** - Stores your websites from Google Search Console
-2. **`page_indexer_pages`** - Stores all pages to be indexed
-3. **`page_indexer_jobs`** - Stores indexing job history
-4. **`page_indexer_sitemaps`** - Stores sitemap information
-5. **`page_indexer_status_history`** - Stores complete status timeline
+1. **`page_indexer_pages`** - Stores all pages to be indexed
+2. **`page_indexer_jobs`** - Stores indexing job history
+3. **`page_indexer_sitemaps`** - Stores sitemap information
+4. **`page_indexer_status_history`** - Stores complete status timeline
+
+**Note:** Site configuration is stored in `config/page-indexer.php` and `.env` file, not in the database.
 
 ---
 
@@ -702,19 +718,19 @@ php artisan queue:work
 use Shammaa\LaravelPageIndexer\Facades\PageIndexer;
 
 // Index a single URL
-PageIndexer::index(string $url, Site $site, string $method = 'both'): array
+PageIndexer::index(string $url, string $method = 'both'): array
 
 // Index multiple URLs
-PageIndexer::bulkIndex(array $urls, Site $site, string $method = 'both'): array
+PageIndexer::bulkIndex(array $urls, string $method = 'both'): array
 
 // Check indexing status
-PageIndexer::checkStatus(string $url, Site $site): array
+PageIndexer::checkStatus(string $url): array
 
-// Sync sites from Search Console
+// List sites from Search Console (for reference)
 PageIndexer::syncSites(): array
 
-// Sync sitemaps for a site
-PageIndexer::syncSitemaps(Site $site): array
+// Sync sitemaps for configured site
+PageIndexer::syncSitemaps(): array
 
 // Parse sitemap XML
 PageIndexer::parseSitemap(string $sitemapUrl): array
@@ -727,10 +743,16 @@ PageIndexer::parseSitemap(string $sitemapUrl): array
 $indexer = page_indexer();
 
 // Index a page
-index_page(string $url, Site $site, string $method = 'both'): array
+index_page(string $url, string $method = 'both'): array
 
 // Bulk index
-bulk_index(array $urls, Site $site, string $method = 'both'): array
+bulk_index(array $urls, string $method = 'both'): array
+
+// Check indexing status
+check_indexing_status(string $url): array
+
+// Check if URL is indexed (returns boolean)
+is_url_indexed(string $url): bool
 ```
 
 ---
@@ -740,19 +762,19 @@ bulk_index(array $urls, Site $site, string $method = 'both'): array
 ### Complete Setup Flow
 
 ```php
-// 1. Sync sites
+// 1. Configure your site URL in .env
+// GOOGLE_SITE_URL=https://example.com/
+
+// 2. List sites from Search Console (verify configuration)
 php artisan page-indexer:sync-sites
 
-// 2. Monitor sitemaps (discovers pages)
+// 3. Monitor sitemaps (discovers pages)
 php artisan page-indexer:monitor-sitemaps
 
-// 3. Enable auto-indexing
-use Shammaa\LaravelPageIndexer\Models\Site;
+// 4. Enable auto-indexing in .env
+// AUTO_INDEXING_ENABLED=true
 
-Site::where('google_site_url', 'https://example.com/')
-    ->update(['auto_indexing_enabled' => true]);
-
-// 4. Schedule commands in Kernel.php
+// 5. Schedule commands in Kernel.php
 $schedule->command('page-indexer:monitor-sitemaps')->daily();
 $schedule->command('page-indexer:auto-index')->daily();
 
@@ -763,14 +785,12 @@ $schedule->command('page-indexer:auto-index')->daily();
 
 ```php
 // After creating a new post/article
-use Shammaa\LaravelPageIndexer\Models\Site;
 use Shammaa\LaravelPageIndexer\Facades\PageIndexer;
 
-$site = Site::first();
 $newPageUrl = route('posts.show', $post);
 
 // Option 1: Index immediately
-PageIndexer::index($newPageUrl, $site);
+PageIndexer::index($newPageUrl);
 
 // Option 2: Let auto-indexing handle it (next run)
 // Just publish the page, auto-indexing will pick it up
@@ -822,10 +842,11 @@ PageIndexer::index($newPageUrl, $site);
 ### Pages Not Getting Indexed
 
 **Check:**
-1. Auto-indexing is enabled for the site
-2. Queue worker is running
-3. Check job failures: `php artisan queue:failed`
-4. Check page status in database
+1. Auto-indexing is enabled (`AUTO_INDEXING_ENABLED=true` in `.env`)
+2. `GOOGLE_SITE_URL` is correctly set in `.env`
+3. Queue worker is running
+4. Check job failures: `php artisan queue:failed`
+5. Check page status in database
 
 ---
 

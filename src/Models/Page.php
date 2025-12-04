@@ -3,7 +3,6 @@
 namespace Shammaa\LaravelPageIndexer\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Page extends Model
@@ -11,7 +10,6 @@ class Page extends Model
     protected $table = 'page_indexer_pages';
     
     protected $fillable = [
-        'site_id',
         'url',
         'indexing_status',
         'last_indexed_at',
@@ -24,13 +22,6 @@ class Page extends Model
         'metadata' => 'array',
     ];
 
-    /**
-     * Get the site that owns this page.
-     */
-    public function site(): BelongsTo
-    {
-        return $this->belongsTo(Site::class);
-    }
 
     /**
      * Get all indexing jobs for this page.

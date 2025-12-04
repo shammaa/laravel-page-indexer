@@ -13,15 +13,14 @@ return new class extends Migration
     {
         Schema::create('page_indexer_sitemaps', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('site_id')->constrained('page_indexer_sites')->onDelete('cascade');
             $table->string('sitemap_url')->comment('Sitemap XML URL');
             $table->string('type', 50)->default('sitemap')->comment('sitemap or sitemapindex');
             $table->timestamp('last_checked_at')->nullable()->comment('Last check timestamp');
             $table->integer('page_count')->default(0)->comment('Number of pages found');
             $table->timestamps();
             
-            $table->unique(['site_id', 'sitemap_url']);
-            $table->index(['site_id', 'last_checked_at']);
+            $table->unique('sitemap_url');
+            $table->index('last_checked_at');
         });
     }
 

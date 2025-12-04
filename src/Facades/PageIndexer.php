@@ -5,11 +5,11 @@ namespace Shammaa\LaravelPageIndexer\Facades;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method static array index(string $url, \Shammaa\LaravelPageIndexer\Models\Site $site, string $method = 'both')
- * @method static array bulkIndex(array $urls, \Shammaa\LaravelPageIndexer\Models\Site $site, string $method = 'both')
- * @method static array checkStatus(string $url, \Shammaa\LaravelPageIndexer\Models\Site $site)
+ * @method static array index(string $url, string $method = 'both')
+ * @method static array bulkIndex(array $urls, string $method = 'both')
+ * @method static array checkStatus(string $url)
  * @method static array syncSites()
- * @method static array syncSitemaps(\Shammaa\LaravelPageIndexer\Models\Site $site)
+ * @method static array syncSitemaps()
  * @method static array parseSitemap(string $sitemapUrl)
  *
  * @see \Shammaa\LaravelPageIndexer\Services\IndexingManager

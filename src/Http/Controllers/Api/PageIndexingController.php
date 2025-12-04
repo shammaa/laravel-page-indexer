@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Shammaa\LaravelPageIndexer\Facades\PageIndexer;
 use Shammaa\LaravelPageIndexer\Models\Page;
-use Shammaa\LaravelPageIndexer\Models\Site;
 use Shammaa\LaravelPageIndexer\Jobs\ProcessIndexingJob;
 use Illuminate\Support\Facades\Queue;
 
@@ -25,7 +24,6 @@ class PageIndexingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'url' => 'required|url',
-            'site_id' => 'nullable|exists:page_indexer_sites,id',
             'method' => 'nullable|in:google,indexnow,both',
             'queue' => 'nullable|boolean',
         ]);
@@ -38,27 +36,13 @@ class PageIndexingController extends Controller
         }
 
         $url = $request->input('url');
-        $siteId = $request->input('site_id');
         $method = $request->input('method', 'both');
         $queue = $request->input('queue', false);
-
-        // Find site
-        $site = $siteId 
-            ? Site::find($siteId)
-            : Site::where('google_site_url', $this->extractSiteUrl($url))->first();
-
-        if (!$site) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Site not found. Please provide site_id or ensure site is configured.',
-            ], 404);
-        }
 
         if ($queue) {
             // Queue for background processing
             $page = Page::firstOrCreate(
                 [
-                    'site_id' => $site->id,
                     'url' => $url,
                 ],
                 [
@@ -78,13 +62,12 @@ class PageIndexingController extends Controller
         }
 
         // Index immediately
-        $result = PageIndexer::index($url, $site, $method);
+        $result = PageIndexer::index($url, $method);
 
         // Create or update page record
-        if ($result['success']) {
+        if ($result['success'] ?? false) {
             $page = Page::firstOrCreate(
                 [
-                    'site_id' => $site->id,
                     'url' => $url,
                 ],
                 [
@@ -125,7 +108,6 @@ class PageIndexingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'url' => 'required|url',
-            'site_id' => 'nullable|exists:page_indexer_sites,id',
         ]);
 
         if ($validator->fails()) {
@@ -136,28 +118,9 @@ class PageIndexingController extends Controller
         }
 
         $url = $request->input('url');
-        $siteId = $request->input('site_id');
 
         // Find page record
-        $page = Page::where('url', $url);
-        if ($siteId) {
-            $page->where('site_id', $siteId);
-        }
-        $page = $page->first();
-
-        // Find site
-        $site = $page 
-            ? $page->site 
-            : ($siteId 
-                ? Site::find($siteId)
-                : Site::where('google_site_url', $this->extractSiteUrl($url))->first());
-
-        if (!$site) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Site not found.',
-            ], 404);
-        }
+        $page = Page::where('url', $url)->first();
 
         // Get status from database
         $statusData = [
@@ -170,7 +133,7 @@ class PageIndexingController extends Controller
 
         // Optionally check via Google Search Console (more accurate but slower)
         if ($request->input('check_google', false)) {
-            $result = PageIndexer::checkStatus($url, $site);
+            $result = PageIndexer::checkStatus($url);
             
             if ($result['success'] && isset($result['inspectionResult'])) {
                 $inspectionResult = $result['inspectionResult']['indexStatusResult'] ?? null;
@@ -205,7 +168,6 @@ class PageIndexingController extends Controller
         $validator = Validator::make($request->all(), [
             'urls' => 'required|array|min:1',
             'urls.*' => 'required|url',
-            'site_id' => 'nullable|exists:page_indexer_sites,id',
             'method' => 'nullable|in:google,indexnow,both',
             'queue' => 'nullable|boolean',
         ]);
@@ -218,21 +180,8 @@ class PageIndexingController extends Controller
         }
 
         $urls = $request->input('urls');
-        $siteId = $request->input('site_id');
         $method = $request->input('method', 'both');
         $queue = $request->input('queue', true);
-
-        // Find site (use first URL to determine site if not provided)
-        $site = $siteId 
-            ? Site::find($siteId)
-            : Site::where('google_site_url', $this->extractSiteUrl($urls[0]))->first();
-
-        if (!$site) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Site not found.',
-            ], 404);
-        }
 
         if ($queue) {
             // Queue all URLs
@@ -240,7 +189,6 @@ class PageIndexingController extends Controller
             foreach ($urls as $url) {
                 $page = Page::firstOrCreate(
                     [
-                        'site_id' => $site->id,
                         'url' => $url,
                     ],
                     [
@@ -262,7 +210,7 @@ class PageIndexingController extends Controller
         }
 
         // Index immediately
-        $result = PageIndexer::bulkIndex($urls, $site, $method);
+        $result = PageIndexer::bulkIndex($urls, $method);
 
         return response()->json([
             'success' => $result['success'] ?? true,
@@ -271,17 +219,5 @@ class PageIndexingController extends Controller
         ]);
     }
 
-    /**
-     * Extract site URL from full URL.
-     * 
-     * @param string $url
-     * @return string
-     */
-    protected function extractSiteUrl(string $url): string
-    {
-        $scheme = parse_url($url, PHP_URL_SCHEME);
-        $host = parse_url($url, PHP_URL_HOST);
-        return ($scheme ?? 'https') . '://' . $host . '/';
-    }
 }
 

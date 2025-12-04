@@ -3,9 +3,9 @@
 namespace Shammaa\LaravelPageIndexer\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Config;
 use Shammaa\LaravelPageIndexer\Jobs\ProcessIndexingJob;
 use Shammaa\LaravelPageIndexer\Models\Page;
-use Shammaa\LaravelPageIndexer\Models\Site;
 
 class AutoIndexCommand extends Command
 {
@@ -15,7 +15,6 @@ class AutoIndexCommand extends Command
      * @var string
      */
     protected $signature = 'page-indexer:auto-index 
-                            {--site-id= : Index specific site only}
                             {--limit=100 : Maximum number of pages to index}
                             {--method=both : Indexing method (google, indexnow, both)}';
 
@@ -31,72 +30,61 @@ class AutoIndexCommand extends Command
      */
     public function handle(): int
     {
-        $this->info('⚡ Starting auto-indexing...');
-        $this->newLine();
-
-        $siteId = $this->option('site-id');
-        $limit = (int) $this->option('limit');
-        $method = $this->option('method');
-
-        // Get sites with auto-indexing enabled
-        $query = Site::where('auto_indexing_enabled', true);
-        
-        if ($siteId) {
-            $query->where('id', $siteId);
-        }
-
-        $sites = $query->get();
-
-        if ($sites->isEmpty()) {
-            $this->warn('⚠️  No sites with auto-indexing enabled found.');
+        // Check if auto-indexing is enabled
+        if (!Config::get('page-indexer.auto_indexing.enabled', false)) {
+            $this->warn('⚠️  Auto-indexing is disabled. Set AUTO_INDEXING_ENABLED=true in your .env file.');
             return Command::FAILURE;
         }
 
+        $this->info('⚡ Starting auto-indexing...');
+        $this->newLine();
+
+        $limit = (int) $this->option('limit');
+        $method = $this->option('method');
+
+        // Get pending pages
+        $pages = Page::where('indexing_status', 'pending')
+            ->limit($limit)
+            ->get();
+
+        if ($pages->isEmpty()) {
+            $this->warn('⚠️  No pending pages found.');
+            return Command::SUCCESS;
+        }
+
+        $this->line("  📄 Found " . $pages->count() . " pending page(s)");
+
+        // Check if IndexNow is configured
+        $hasIndexNow = !empty(Config::get('page-indexer.site.indexnow_api_key', ''));
+
         $totalQueued = 0;
 
-        foreach ($sites as $site) {
-            $this->info("🌐 Processing site: {$site->name}");
-
-            // Get pending pages
-            $pages = Page::where('site_id', $site->id)
-                ->where('indexing_status', 'pending')
-                ->limit($limit)
-                ->get();
-
-            if ($pages->isEmpty()) {
-                $this->line("  ℹ️  No pending pages found");
-                continue;
+        // Queue indexing jobs
+        foreach ($pages as $page) {
+            // Determine which search engines to use
+            $engines = [];
+            
+            if ($method === 'google' || $method === 'both') {
+                $engines[] = 'google';
             }
 
-            $this->line("  📄 Found " . $pages->count() . " pending page(s)");
+            if ($method === 'indexnow' || $method === 'both') {
+                if ($hasIndexNow) {
+                    $engines[] = 'indexnow';
+                }
+            }
 
-            // Queue indexing jobs
-            foreach ($pages as $page) {
-                // Determine which search engines to use
-                $engines = [];
+            // Dispatch jobs
+            foreach ($engines as $engine) {
+                ProcessIndexingJob::dispatch($page, $engine)
+                    ->onQueue(config('page-indexer.queue.queue', 'default'));
                 
-                if ($method === 'google' || $method === 'both') {
-                    $engines[] = 'google';
-                }
-
-                if ($method === 'indexnow' || $method === 'both') {
-                    if ($site->hasIndexNowKey()) {
-                        $engines[] = 'indexnow';
-                    }
-                }
-
-                // Dispatch jobs
-                foreach ($engines as $engine) {
-                    ProcessIndexingJob::dispatch($page, $engine)
-                        ->onQueue(config('page-indexer.queue.queue', 'default'));
-                    
-                    $totalQueued++;
-                }
+                $totalQueued++;
             }
-
-            $this->line("  ✅ Queued " . count($pages) . " page(s) for indexing");
-            $this->newLine();
         }
+
+        $this->line("  ✅ Queued " . $totalQueued . " job(s) for indexing");
+        $this->newLine();
 
         $this->info("✨ Auto-indexing completed: {$totalQueued} job(s) queued");
 

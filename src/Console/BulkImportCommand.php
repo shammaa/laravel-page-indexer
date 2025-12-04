@@ -4,7 +4,6 @@ namespace Shammaa\LaravelPageIndexer\Console;
 
 use Illuminate\Console\Command;
 use Shammaa\LaravelPageIndexer\Models\Page;
-use Shammaa\LaravelPageIndexer\Models\Site;
 use Shammaa\LaravelPageIndexer\Services\IndexingManager;
 
 class BulkImportCommand extends Command
@@ -16,8 +15,6 @@ class BulkImportCommand extends Command
      */
     protected $signature = 'page-indexer:bulk-import 
                             {urls : Comma-separated URLs or path to file with URLs (one per line)}
-                            {--site-id= : Site ID to associate URLs with}
-                            {--site-url= : Site URL to find site}
                             {--queue : Queue URLs for indexing instead of immediate processing}
                             {--chunk=100 : Process URLs in chunks}
                             {--method=both : Indexing method (google, indexnow, both)}';
@@ -35,28 +32,9 @@ class BulkImportCommand extends Command
     public function handle(IndexingManager $manager): int
     {
         $urlsInput = $this->argument('urls');
-        $siteId = $this->option('site-id');
-        $siteUrl = $this->option('site-url');
         $shouldQueue = $this->option('queue');
         $chunkSize = (int) $this->option('chunk');
         $method = $this->option('method');
-
-        // Find site
-        $site = null;
-        
-        if ($siteId) {
-            $site = Site::find($siteId);
-        } elseif ($siteUrl) {
-            $site = Site::where('google_site_url', $siteUrl)->first();
-        }
-
-        if (!$site) {
-            $this->error('❌ Site not found. Please provide --site-id or --site-url');
-            return Command::FAILURE;
-        }
-
-        $this->info("🌐 Using site: {$site->name} ({$site->google_site_url})");
-        $this->newLine();
 
         // Parse URLs
         $urls = $this->parseUrls($urlsInput);
@@ -92,7 +70,6 @@ class BulkImportCommand extends Command
 
                 $page = Page::firstOrCreate(
                     [
-                        'site_id' => $site->id,
                         'url' => $url,
                     ],
                     [
@@ -116,14 +93,14 @@ class BulkImportCommand extends Command
             }
 
             // If not queuing, index immediately (in batches)
-            if (!$shouldQueue && $site->auto_indexing_enabled) {
+            if (!$shouldQueue && config('page-indexer.auto_indexing.enabled', false)) {
                 $chunkUrls = array_filter($chunk, function($url) {
                     return !empty(trim($url)) && filter_var(trim($url), FILTER_VALIDATE_URL);
                 });
 
                 if (!empty($chunkUrls)) {
                     try {
-                        $result = $manager->bulkIndex($chunkUrls, $site, $method);
+                        $result = $manager->bulkIndex($chunkUrls, $method);
                         
                         // Count successful submissions
                         if (isset($result['google']) && $result['google']['success'] ?? false) {

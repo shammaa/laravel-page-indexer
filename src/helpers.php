@@ -17,13 +17,12 @@ if (!function_exists('index_page')) {
      * Index a single page.
      *
      * @param string $url
-     * @param \Shammaa\LaravelPageIndexer\Models\Site $site
      * @param string $method
      * @return array
      */
-    function index_page(string $url, $site, string $method = 'both')
+    function index_page(string $url, string $method = 'both')
     {
-        return page_indexer()->index($url, $site, $method);
+        return page_indexer()->index($url, $method);
     }
 }
 
@@ -32,13 +31,12 @@ if (!function_exists('bulk_index')) {
      * Index multiple pages.
      *
      * @param array $urls
-     * @param \Shammaa\LaravelPageIndexer\Models\Site $site
      * @param string $method
      * @return array
      */
-    function bulk_index(array $urls, $site, string $method = 'both')
+    function bulk_index(array $urls, string $method = 'both')
     {
-        return page_indexer()->bulkIndex($urls, $site, $method);
+        return page_indexer()->bulkIndex($urls, $method);
     }
 }
 
@@ -47,12 +45,11 @@ if (!function_exists('check_indexing_status')) {
      * Check indexing status for a URL.
      *
      * @param string $url
-     * @param \Shammaa\LaravelPageIndexer\Models\Site $site
      * @return array
      */
-    function check_indexing_status(string $url, $site)
+    function check_indexing_status(string $url)
     {
-        return page_indexer()->checkStatus($url, $site);
+        return page_indexer()->checkStatus($url);
     }
 }
 
@@ -61,12 +58,11 @@ if (!function_exists('is_url_indexed')) {
      * Check if a URL is indexed (returns boolean).
      *
      * @param string $url
-     * @param \Shammaa\LaravelPageIndexer\Models\Site $site
      * @return bool
      */
-    function is_url_indexed(string $url, $site): bool
+    function is_url_indexed(string $url): bool
     {
-        $result = page_indexer()->checkStatus($url, $site);
+        $result = page_indexer()->checkStatus($url);
         
         if (!$result['success']) {
             return false;

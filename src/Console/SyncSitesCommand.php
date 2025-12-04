@@ -3,7 +3,7 @@
 namespace Shammaa\LaravelPageIndexer\Console;
 
 use Illuminate\Console\Command;
-use Shammaa\LaravelPageIndexer\Models\Site;
+use Illuminate\Support\Facades\Config;
 use Shammaa\LaravelPageIndexer\Services\IndexingManager;
 
 class SyncSitesCommand extends Command
@@ -13,28 +13,27 @@ class SyncSitesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'page-indexer:sync-sites 
-                            {--force : Force sync even if site exists}';
+    protected $signature = 'page-indexer:sync-sites';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Sync sites from Google Search Console';
+    protected $description = 'List sites from Google Search Console (for reference only)';
 
     /**
      * Execute the console command.
      */
     public function handle(IndexingManager $manager): int
     {
-        $this->info('🔄 Syncing sites from Google Search Console...');
+        $this->info('🔄 Fetching sites from Google Search Console...');
         $this->newLine();
 
         $result = $manager->syncSites();
 
         if (!$result['success']) {
-            $this->error('❌ Failed to sync sites: ' . ($result['error'] ?? 'Unknown error'));
+            $this->error('❌ Failed to fetch sites: ' . ($result['error'] ?? 'Unknown error'));
             return Command::FAILURE;
         }
 
@@ -45,52 +44,33 @@ class SyncSitesCommand extends Command
             return Command::SUCCESS;
         }
 
-        $this->info('✅ Found ' . count($sites) . ' site(s):');
+        $this->info('✅ Found ' . count($sites) . ' site(s) in Google Search Console:');
         $this->newLine();
 
-        $created = 0;
-        $updated = 0;
-
+        $tableData = [];
         foreach ($sites as $siteData) {
             $siteUrl = $siteData['siteUrl'];
             $permission = $siteData['permissionLevel'] ?? 'unknown';
-
-            $site = Site::where('google_site_url', $siteUrl)->first();
-
-            if ($site) {
-                if ($this->option('force')) {
-                    $site->update([
-                        'name' => $this->extractDomain($siteUrl),
-                    ]);
-                    $updated++;
-                    $this->line("  🔄 Updated: {$siteUrl}");
-                } else {
-                    $this->line("  ⏭️  Skipped (exists): {$siteUrl}");
-                }
-            } else {
-                Site::create([
-                    'google_site_url' => $siteUrl,
-                    'name' => $this->extractDomain($siteUrl),
-                    'auto_indexing_enabled' => false,
-                ]);
-                $created++;
-                $this->line("  ✅ Created: {$siteUrl} ({$permission})");
-            }
+            $isConfigured = (Config::get('page-indexer.site.google_site_url') === $siteUrl) ? '✅' : '❌';
+            
+            $tableData[] = [
+                $isConfigured,
+                $siteUrl,
+                $permission,
+            ];
         }
 
+        $this->table(['Configured', 'Site URL', 'Permission'], $tableData);
         $this->newLine();
-        $this->info("✨ Sync completed: {$created} created, {$updated} updated");
+        
+        $configuredUrl = Config::get('page-indexer.site.google_site_url');
+        if (empty($configuredUrl)) {
+            $this->warn('💡 Tip: Set GOOGLE_SITE_URL in your .env file to configure your site.');
+        } else {
+            $this->info("💡 Current configured site: {$configuredUrl}");
+        }
 
         return Command::SUCCESS;
-    }
-
-    /**
-     * Extract domain name from URL.
-     */
-    protected function extractDomain(string $url): string
-    {
-        $parsed = parse_url($url);
-        return $parsed['host'] ?? $url;
     }
 }
 

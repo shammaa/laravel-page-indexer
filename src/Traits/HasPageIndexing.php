@@ -4,7 +4,6 @@ namespace Shammaa\LaravelPageIndexer\Traits;
 
 use Shammaa\LaravelPageIndexer\Facades\PageIndexer;
 use Shammaa\LaravelPageIndexer\Models\Page;
-use Shammaa\LaravelPageIndexer\Models\Site;
 use Illuminate\Support\Facades\Queue;
 
 trait HasPageIndexing
@@ -17,45 +16,29 @@ trait HasPageIndexing
     public function getIndexedPageAttribute()
     {
         $url = $this->getIndexableUrl();
-        $site = $this->getDefaultSite();
         
-        if (!$site) {
-            return null;
-        }
-        
-        return Page::where('site_id', $site->id)
-            ->where('url', $url)
-            ->first();
+        return Page::where('url', $url)->first();
     }
 
     /**
      * Index this model's URL.
      * 
-     * @param Site|null $site
      * @param string $method
      * @param bool $queue
      * @return array
      */
-    public function indexUrl(Site $site = null, string $method = 'both', bool $queue = false): array
+    public function indexUrl(string $method = 'both', bool $queue = false): array
     {
         $url = $this->getIndexableUrl();
-        $site = $site ?? $this->getDefaultSite();
-
-        if (!$site) {
-            return [
-                'success' => false,
-                'error' => 'No site found. Please provide a site or set up a default site.',
-            ];
-        }
 
         if ($queue) {
-            return $this->queueIndexing($url, $site, $method);
+            return $this->queueIndexing($url, $method);
         }
 
-        $result = PageIndexer::index($url, $site, $method);
+        $result = PageIndexer::index($url, $method);
 
         // Create or update page record
-        $this->syncPageRecord($site, $result);
+        $this->syncPageRecord($result);
 
         return $result;
     }
@@ -63,22 +46,13 @@ trait HasPageIndexing
     /**
      * Check indexing status for this model's URL.
      * 
-     * @param Site|null $site
      * @return array
      */
-    public function checkIndexingStatus(Site $site = null): array
+    public function checkIndexingStatus(): array
     {
         $url = $this->getIndexableUrl();
-        $site = $site ?? $this->getDefaultSite();
 
-        if (!$site) {
-            return [
-                'success' => false,
-                'error' => 'No site found. Please provide a site or set up a default site.',
-            ];
-        }
-
-        return PageIndexer::checkStatus($url, $site);
+        return PageIndexer::checkStatus($url);
     }
 
     /**
@@ -153,32 +127,16 @@ trait HasPageIndexing
     }
 
     /**
-     * Get the default site for indexing.
-     * Override this method to return your default site.
-     * 
-     * @return Site|null
-     */
-    protected function getDefaultSite(): ?Site
-    {
-        // Try to find site based on the URL
-        $url = $this->getIndexableUrl();
-        $host = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . '/';
-        
-        return Site::where('google_site_url', $host)->first();
-    }
-
-    /**
      * Queue indexing job.
      * 
      * @param string $url
-     * @param Site $site
      * @param string $method
      * @return array
      */
-    protected function queueIndexing(string $url, Site $site, string $method): array
+    protected function queueIndexing(string $url, string $method): array
     {
         // Create page record first
-        $page = $this->syncPageRecord($site, ['success' => true]);
+        $page = $this->syncPageRecord(['success' => true]);
 
         // Dispatch job
         \Shammaa\LaravelPageIndexer\Jobs\ProcessIndexingJob::dispatch($page, $method);
@@ -193,17 +151,15 @@ trait HasPageIndexing
     /**
      * Sync page record in database.
      * 
-     * @param Site $site
      * @param array $result
      * @return Page
      */
-    protected function syncPageRecord(Site $site, array $result): Page
+    protected function syncPageRecord(array $result): Page
     {
         $url = $this->getIndexableUrl();
 
         $page = Page::firstOrCreate(
             [
-                'site_id' => $site->id,
                 'url' => $url,
             ],
             [

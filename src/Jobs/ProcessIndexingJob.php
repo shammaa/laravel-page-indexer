@@ -42,7 +42,7 @@ class ProcessIndexingJob implements ShouldQueue
             $job->markAsProcessing();
 
             $method = $this->searchEngine === 'google' ? 'google' : 'indexnow';
-            $results = $manager->index($this->page->url, $this->page->site, $method);
+            $results = $manager->index($this->page->url, $method);
 
             if (isset($results[$this->searchEngine])) {
                 $result = $results[$this->searchEngine];

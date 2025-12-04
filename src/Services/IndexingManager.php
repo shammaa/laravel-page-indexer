@@ -2,8 +2,7 @@
 
 namespace Shammaa\LaravelPageIndexer\Services;
 
-use Shammaa\LaravelPageIndexer\Models\Page;
-use Shammaa\LaravelPageIndexer\Models\Site;
+use Illuminate\Support\Facades\Config;
 
 class IndexingManager
 {
@@ -15,14 +14,54 @@ class IndexingManager
     ) {}
 
     /**
+     * Get site configuration.
+     *
+     * @return array
+     */
+    protected function getSiteConfig(): array
+    {
+        return Config::get('page-indexer.site', []);
+    }
+
+    /**
+     * Get Google site URL from config.
+     *
+     * @return string
+     */
+    protected function getGoogleSiteUrl(): string
+    {
+        return $this->getSiteConfig()['google_site_url'] ?? '';
+    }
+
+    /**
+     * Get IndexNow API key from config.
+     *
+     * @return string|null
+     */
+    protected function getIndexNowApiKey(): ?string
+    {
+        $key = $this->getSiteConfig()['indexnow_api_key'] ?? '';
+        return !empty($key) ? $key : null;
+    }
+
+    /**
+     * Check if IndexNow is configured.
+     *
+     * @return bool
+     */
+    protected function hasIndexNowKey(): bool
+    {
+        return !empty($this->getIndexNowApiKey());
+    }
+
+    /**
      * Index a single URL.
      *
      * @param string $url
-     * @param Site $site
      * @param string $method
      * @return array
      */
-    public function index(string $url, Site $site, string $method = 'both'): array
+    public function index(string $url, string $method = 'both'): array
     {
         $results = [];
 
@@ -37,12 +76,12 @@ class IndexingManager
 
         // Submit to IndexNow
         if ($method === 'indexnow' || $method === 'both') {
-            if ($site->hasIndexNowKey()) {
+            if ($this->hasIndexNowKey()) {
                 $host = $this->sitemapService->extractHost($url);
                 $result = $this->indexNowService->submitUrl(
                     $url,
                     $host,
-                    $site->indexnow_api_key
+                    $this->getIndexNowApiKey()
                 );
                 $results['indexnow'] = $result;
             }
@@ -55,11 +94,10 @@ class IndexingManager
      * Index multiple URLs.
      *
      * @param array $urls
-     * @param Site $site
      * @param string $method
      * @return array
      */
-    public function bulkIndex(array $urls, Site $site, string $method = 'both'): array
+    public function bulkIndex(array $urls, string $method = 'both'): array
     {
         $results = [];
 
@@ -75,12 +113,12 @@ class IndexingManager
 
         // Submit to IndexNow
         if ($method === 'indexnow' || $method === 'both') {
-            if ($site->hasIndexNowKey()) {
+            if ($this->hasIndexNowKey()) {
                 $host = $this->sitemapService->extractHost($urls[0] ?? '');
                 $result = $this->indexNowService->submitBulk(
                     $urls,
                     $host,
-                    $site->indexnow_api_key
+                    $this->getIndexNowApiKey()
                 );
                 $results['indexnow'] = $result;
             }
@@ -93,15 +131,20 @@ class IndexingManager
      * Check indexing status for a URL.
      *
      * @param string $url
-     * @param Site $site
      * @return array
      */
-    public function checkStatus(string $url, Site $site): array
+    public function checkStatus(string $url): array
     {
-        return $this->searchConsoleService->inspectUrl(
-            $site->google_site_url,
-            $url
-        );
+        $siteUrl = $this->getGoogleSiteUrl();
+        
+        if (empty($siteUrl)) {
+            return [
+                'success' => false,
+                'error' => 'Google site URL not configured. Please set GOOGLE_SITE_URL in your .env file.',
+            ];
+        }
+
+        return $this->searchConsoleService->inspectUrl($siteUrl, $url);
     }
 
     /**
@@ -115,16 +158,22 @@ class IndexingManager
     }
 
     /**
-     * Sync sitemaps for a site.
+     * Sync sitemaps for the configured site.
      *
-     * @param Site $site
      * @return array
      */
-    public function syncSitemaps(Site $site): array
+    public function syncSitemaps(): array
     {
-        return $this->searchConsoleService->getSitemaps(
-            $site->google_site_url
-        );
+        $siteUrl = $this->getGoogleSiteUrl();
+        
+        if (empty($siteUrl)) {
+            return [
+                'success' => false,
+                'error' => 'Google site URL not configured. Please set GOOGLE_SITE_URL in your .env file.',
+            ];
+        }
+
+        return $this->searchConsoleService->getSitemaps($siteUrl);
     }
 
     /**

@@ -4,7 +4,6 @@ namespace Shammaa\LaravelPageIndexer\Console;
 
 use Illuminate\Console\Command;
 use Shammaa\LaravelPageIndexer\Models\Page;
-use Shammaa\LaravelPageIndexer\Models\Site;
 use Shammaa\LaravelPageIndexer\Services\IndexingManager;
 
 class CheckStatusCommand extends Command
@@ -16,7 +15,6 @@ class CheckStatusCommand extends Command
      */
     protected $signature = 'page-indexer:check-status 
                             {url? : Specific URL to check}
-                            {--site-id= : Check pages for specific site}
                             {--limit=100 : Maximum number of pages to check}
                             {--all : Check all pages (ignore limit)}
                             {--batch=10 : Number of pages to check per batch}';
@@ -34,13 +32,12 @@ class CheckStatusCommand extends Command
     public function handle(IndexingManager $manager): int
     {
         $url = $this->argument('url');
-        $siteId = $this->option('site-id');
         $limit = $this->option('all') ? null : (int) $this->option('limit');
         $batchSize = (int) $this->option('batch');
 
         // Check single URL
         if ($url) {
-            return $this->checkSingleUrl($url, $siteId, $manager);
+            return $this->checkSingleUrl($url, $manager);
         }
 
         // Check multiple pages
@@ -48,10 +45,6 @@ class CheckStatusCommand extends Command
         $this->newLine();
 
         $query = Page::query();
-
-        if ($siteId) {
-            $query->where('site_id', $siteId);
-        }
 
         // Prioritize pages that haven't been checked recently
         $query->orderBy('last_indexed_at', 'asc')
@@ -84,10 +77,8 @@ class CheckStatusCommand extends Command
         foreach ($pages->chunk($batchSize) as $chunk) {
             foreach ($chunk as $page) {
                 try {
-                    $site = $page->site;
-                    
                     // Check status via Search Console
-                    $result = $manager->checkStatus($page->url, $site);
+                    $result = $manager->checkStatus($page->url);
 
                     if (!$result['success']) {
                         $errors++;
@@ -158,37 +149,16 @@ class CheckStatusCommand extends Command
     /**
      * Check status for a single URL.
      */
-    protected function checkSingleUrl(string $url, ?string $siteId, IndexingManager $manager): int
+    protected function checkSingleUrl(string $url, IndexingManager $manager): int
     {
         $this->info("🔍 Checking status for: {$url}");
         $this->newLine();
 
         // Find the page
-        $query = Page::where('url', $url);
-        
-        if ($siteId) {
-            $query->where('site_id', $siteId);
-        }
+        $page = Page::where('url', $url)->first();
 
-        $page = $query->first();
-
-        if (!$page) {
-            // Try to find site manually if page doesn't exist
-            $site = $siteId 
-                ? Site::find($siteId)
-                : Site::where('google_site_url', parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . '/')->first();
-
-            if (!$site) {
-                $this->error('❌ Page not found and site cannot be determined.');
-                $this->line('💡 Tip: Make sure the URL exists in your database or provide --site-id');
-                return Command::FAILURE;
-            }
-
-            // Check without page record
-            $result = $manager->checkStatus($url, $site);
-        } else {
-            $result = $manager->checkStatus($url, $page->site);
-        }
+        // Check status
+        $result = $manager->checkStatus($url);
 
         if (!$result['success']) {
             $this->error('❌ Failed to check status: ' . ($result['error'] ?? 'Unknown error'));
