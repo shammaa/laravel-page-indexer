@@ -36,10 +36,11 @@ trait HasPageIndexing
     /**
      * Whether to queue auto-indexing jobs.
      * Set to true to queue indexing instead of immediate processing.
+     * If null, will use config value.
      * 
-     * @var bool
+     * @var bool|null
      */
-    protected $autoIndexQueue = false;
+    protected $autoIndexQueue = null;
 
     /**
      * Boot the trait and register model events.
@@ -48,17 +49,23 @@ trait HasPageIndexing
     {
         // Auto-index on create
         static::created(function ($model) {
-            if ($model->shouldAutoIndexOnCreate() && $model->isPublished()) {
-                $model->autoIndex();
+            if ($model->shouldAutoIndexOnCreate()) {
+                // Check if published status is required
+                if (!$model->shouldRequirePublished() || $model->isPublished()) {
+                    $model->autoIndex();
+                }
             }
         });
 
-        // Auto-index on update (if published)
+        // Auto-index on update
         static::updated(function ($model) {
-            if ($model->shouldAutoIndexOnUpdate() && $model->isPublished()) {
-                // Check if URL changed or status changed to published
-                if ($model->wasChanged('url') || $model->wasChanged('status') || $model->wasChanged('published_at')) {
-                    $model->autoIndex();
+            if ($model->shouldAutoIndexOnUpdate()) {
+                // Check if published status is required
+                if (!$model->shouldRequirePublished() || $model->isPublished()) {
+                    // Check if URL changed or status changed to published
+                    if ($model->wasChanged('url') || $model->wasChanged('status') || $model->wasChanged('published_at')) {
+                        $model->autoIndex();
+                    }
                 }
             }
         });
@@ -71,7 +78,12 @@ trait HasPageIndexing
      */
     protected function shouldAutoIndexOnCreate(): bool
     {
-        return $this->autoIndexOnCreate ?? true;
+        // Check model property first, then config
+        if (isset($this->autoIndexOnCreate)) {
+            return $this->autoIndexOnCreate;
+        }
+        
+        return config('page-indexer.auto_indexing.auto_index_on_create', true);
     }
 
     /**
@@ -81,7 +93,22 @@ trait HasPageIndexing
      */
     protected function shouldAutoIndexOnUpdate(): bool
     {
-        return $this->autoIndexOnUpdate ?? true;
+        // Check model property first, then config
+        if (isset($this->autoIndexOnUpdate)) {
+            return $this->autoIndexOnUpdate;
+        }
+        
+        return config('page-indexer.auto_indexing.auto_index_on_update', true);
+    }
+
+    /**
+     * Check if published status is required for auto-indexing.
+     * 
+     * @return bool
+     */
+    protected function shouldRequirePublished(): bool
+    {
+        return config('page-indexer.auto_indexing.require_published', true);
     }
 
     /**
@@ -118,11 +145,18 @@ trait HasPageIndexing
     public function autoIndex(): ?array
     {
         try {
-            return $this->indexUrl($this->autoIndexMethod ?? 'both', $this->autoIndexQueue ?? false);
+            // Get method from model property or config
+            $method = $this->autoIndexMethod ?? config('page-indexer.auto_indexing.method', 'both');
+            
+            // Get queue setting from model property or config
+            $useQueue = $this->autoIndexQueue ?? config('page-indexer.auto_indexing.use_queue', true);
+            
+            return $this->indexUrl($method, $useQueue);
         } catch (\Exception $e) {
             Log::error('Auto-indexing failed', [
                 'model' => get_class($this),
-                'id' => $this->id,
+                'id' => $this->id ?? null,
+                'url' => $this->getIndexableUrl() ?? 'unknown',
                 'error' => $e->getMessage(),
             ]);
             return null;

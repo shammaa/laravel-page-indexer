@@ -49,6 +49,12 @@ return [
         'schedule' => env('AUTO_INDEXING_SCHEDULE', 'daily'), // daily, hourly, etc.
         'check_new_pages_interval' => env('CHECK_NEW_PAGES_INTERVAL', 24), // hours
         'max_pages_per_batch' => env('MAX_PAGES_PER_BATCH', 100),
+        // Auto-index on model create/update
+        'auto_index_on_create' => env('AUTO_INDEX_ON_CREATE', true), // Auto-index when model is created
+        'auto_index_on_update' => env('AUTO_INDEX_ON_UPDATE', true), // Auto-index when model is updated
+        'require_published' => env('AUTO_INDEX_REQUIRE_PUBLISHED', true), // Only index if model is published
+        'use_queue' => env('AUTO_INDEX_USE_QUEUE', true), // Use queue for auto-indexing
+        'method' => env('AUTO_INDEX_METHOD', 'both'), // 'google', 'indexnow', or 'both'
     ],
 
     /*
