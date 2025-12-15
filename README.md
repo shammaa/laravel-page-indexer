@@ -141,9 +141,25 @@ This package offers **two distinct ways** to use it, depending on your needs:
 
 ## 🔑 API Setup & Prerequisites
 
-Before installing the package, you need to set up the required APIs:
+Before installing the package, you need to set up the required APIs based on which mode you're using:
+
+### 📋 Quick Setup Guide by Mode
+
+**Mode 1 (Direct Service Usage):**
+- ✅ **Required:** Google Indexing API setup (Step 1 below)
+- ❌ **Not Required:** Google Search Console API (Step 2)
+- ❌ **Not Required:** IndexNow API Key in `.env` (can pass as parameter)
+
+**Mode 2 (Full Page Indexer):**
+- ✅ **Required:** Google Indexing API setup (Step 1 below)
+- ✅ **Required:** Google Search Console API (Step 2 below)
+- ✅ **Optional:** IndexNow API Key in `.env` (Step 3 below)
+
+---
 
 ### 1. Google Indexing API Setup
+
+**Required for:** Both Mode 1 and Mode 2
 
 **Why:** To submit pages directly to Google (fastest indexing method).
 
@@ -193,7 +209,11 @@ GOOGLE_SERVICE_ACCOUNT_PATH=/absolute/path/to/service-account.json
 
 ### 2. Google Search Console API Setup
 
+**Required for:** Mode 2 only (Full Page Indexer)
+
 **Why:** To automatically sync your sitemaps and check indexing status.
+
+> **Note:** If you're using **Mode 1 (Direct Service Usage)**, you can skip this step. Google Search Console API is only needed for Mode 2 features like sitemap monitoring and status checking.
 
 #### Enable Search Console API
 1. In your Google Cloud Project (same project where you created the Service Account)
@@ -265,16 +285,19 @@ composer require shammaa/laravel-page-indexer
 ### Step 2: Publish Configuration & Migrations
 
 ```bash
-# Publish configuration file
+# Publish configuration file (required for both modes)
 php artisan vendor:publish --tag=page-indexer-config
 
-# Publish migration files (only needed for Mode 2)
+# Publish migration files (ONLY needed for Mode 2 - Full Page Indexer)
+# Mode 1 users can skip this step!
 php artisan vendor:publish --tag=page-indexer-migrations
 ```
 
 **What this does:**
-- Creates `config/page-indexer.php` in your config directory
-- Copies migration files to `database/migrations/` directory
+- Creates `config/page-indexer.php` in your config directory (both modes)
+- Copies migration files to `database/migrations/` directory (Mode 2 only)
+
+> **Note:** If you're using **Mode 1 (Direct Service Usage)**, you only need to publish the config file. You can skip the migrations step entirely.
 
 ### Step 3: Run Migrations (Mode 2 Only)
 
@@ -294,10 +317,28 @@ php artisan migrate
 
 ### Step 4: Configure Environment Variables
 
-Add to your `.env` file:
+Add to your `.env` file based on which mode you're using:
+
+#### For Mode 1 (Direct Service Usage):
 
 ```env
-# Google API Configuration (Required for both modes)
+# Google API Configuration (Required)
+# Use absolute path to your service account JSON file
+GOOGLE_SERVICE_ACCOUNT_PATH=/absolute/path/to/service-account.json
+
+# Example for Windows:
+# GOOGLE_SERVICE_ACCOUNT_PATH=E:\laravel\project\storage\app\google-service-account.json
+
+# Example for Linux/Mac:
+# GOOGLE_SERVICE_ACCOUNT_PATH=/var/www/html/storage/app/google-service-account.json
+```
+
+**That's it!** Mode 1 doesn't need any other environment variables. You can pass IndexNow API key directly as a parameter when calling the service.
+
+#### For Mode 2 (Full Page Indexer):
+
+```env
+# Google API Configuration (Required)
 # Use absolute path to your service account JSON file
 GOOGLE_SERVICE_ACCOUNT_PATH=/absolute/path/to/service-account.json
 
@@ -307,13 +348,12 @@ GOOGLE_SERVICE_ACCOUNT_PATH=/absolute/path/to/service-account.json
 # Example for Linux/Mac:
 # GOOGLE_SERVICE_ACCOUNT_PATH=/var/www/html/storage/app/google-service-account.json
 
-# Site Configuration (Required for Mode 2 only)
+# Site Configuration (Required for Mode 2)
 # Your website URL as registered in Google Search Console
-# Note: Not needed for Mode 1 (Direct Service Usage)
 GOOGLE_SITE_URL=https://example.com/
 
-# IndexNow Configuration (Optional - Only for Mode 2)
-# Note: For Mode 1, pass API key directly as parameter (no .env needed)
+# IndexNow Configuration (Optional - but recommended for Mode 2)
+# Note: For Mode 1, you can pass API key directly as parameter (no .env needed)
 INDEXNOW_API_KEY=your-32-character-key
 
 # Auto-Indexing (Optional - Only for Mode 2)
@@ -325,6 +365,8 @@ AUTO_INDEXING_SCHEDULE=daily
 - Use **absolute path** (full path) for `GOOGLE_SERVICE_ACCOUNT_PATH`
 - Make sure the JSON file is readable by your web server
 - Keep the JSON file secure and never commit it to version control
+- **Mode 1 users:** You only need `GOOGLE_SERVICE_ACCOUNT_PATH` - no other variables required!
+- **Mode 2 users:** You need `GOOGLE_SERVICE_ACCOUNT_PATH` + `GOOGLE_SITE_URL` + optionally `INDEXNOW_API_KEY`
 
 ### Step 5: Test the Connection
 
@@ -333,20 +375,36 @@ Verify that everything is set up correctly:
 ```bash
 # Check if commands are available
 php artisan list | grep page-indexer
+```
 
-# Test connection by listing sites from Google Search Console (Mode 2)
+**For Mode 1 (Direct Service Usage):**
+```php
+// Test Google Indexing (no command needed, just test in code)
+use Shammaa\LaravelPageIndexer\Facades\GoogleIndexing;
+
+$result = GoogleIndexing::submitUrl('https://example.com/test');
+if ($result['success']) {
+    echo "✅ Google Indexing API is working!";
+}
+```
+
+**For Mode 2 (Full Page Indexer):**
+```bash
+# Test connection by listing sites from Google Search Console
 php artisan page-indexer:sync-sites
 ```
 
 **Expected Output:**
 - List of all available page-indexer commands
-- List of sites from Google Search Console (for reference)
-- Shows which site is configured in your `.env` file
+- (Mode 2 only) List of sites from Google Search Console (for reference)
+- (Mode 2 only) Shows which site is configured in your `.env` file
 
 **If you see errors:**
 - Check Service Account JSON file path is correct
 - Verify Service Account has Owner permissions in Search Console
-- Make sure Google APIs are enabled (Indexing API & Search Console API)
+- Make sure Google Indexing API is enabled (required for both modes)
+- (Mode 2 only) Make sure Google Search Console API is enabled
+- (Mode 2 only) Verify `GOOGLE_SITE_URL` matches your Search Console property
 
 ---
 
@@ -354,19 +412,32 @@ php artisan page-indexer:sync-sites
 
 Use this checklist to verify your installation:
 
+### Mode 1 (Direct Service Usage) Checklist:
+
 - [ ] Package installed via Composer
 - [ ] Configuration file published (`config/page-indexer.php` exists)
-- [ ] Migration files published (check `database/migrations/` directory) - **Mode 2 only**
-- [ ] Migrations run successfully (`php artisan migrate`) - **Mode 2 only**
 - [ ] Google Service Account JSON file downloaded
 - [ ] Service Account email added to Google Search Console as Owner
 - [ ] `GOOGLE_SERVICE_ACCOUNT_PATH` set in `.env` (absolute path)
-- [ ] `GOOGLE_SITE_URL` set in `.env` (your website URL) - **Only for Mode 2**
-- [ ] IndexNow API key generated (optional) - **Only for Mode 2**
-- [ ] `INDEXNOW_API_KEY` set in `.env` (optional) - **Only for Mode 2**
-- [ ] Connection tested successfully (`php artisan page-indexer:sync-sites`) - **Mode 2 only**
+- [ ] Google Indexing API tested successfully (in code)
 
-**All checked?** You're ready to use the library! 🎉
+**All checked?** You're ready to use Mode 1! 🎉
+
+### Mode 2 (Full Page Indexer) Checklist:
+
+- [ ] Package installed via Composer
+- [ ] Configuration file published (`config/page-indexer.php` exists)
+- [ ] Migration files published (check `database/migrations/` directory)
+- [ ] Migrations run successfully (`php artisan migrate`)
+- [ ] Google Service Account JSON file downloaded
+- [ ] Service Account email added to Google Search Console as Owner
+- [ ] `GOOGLE_SERVICE_ACCOUNT_PATH` set in `.env` (absolute path)
+- [ ] `GOOGLE_SITE_URL` set in `.env` (your website URL)
+- [ ] IndexNow API key generated (optional, but recommended)
+- [ ] `INDEXNOW_API_KEY` set in `.env` (optional)
+- [ ] Connection tested successfully (`php artisan page-indexer:sync-sites`)
+
+**All checked?** You're ready to use Mode 2! 🎉
 
 ---
 
@@ -757,6 +828,8 @@ php artisan page-indexer:monitor-sitemaps
 
 This command monitors sitemaps for your configured site (set in `GOOGLE_SITE_URL`).
 
+> **Note:** This command requires Mode 2 setup (needs `GOOGLE_SITE_URL` in `.env`).
+
 ### Auto-Index Pending Pages
 
 ```bash
@@ -857,6 +930,10 @@ After publishing the config file, you can customize settings in `config/page-ind
     ],
 ],
 ```
+
+**Important:**
+- **Mode 1 users:** You don't need to configure this in `.env`. Just pass the API key directly as a parameter when calling `IndexNow::submitUrl()`.
+- **Mode 2 users:** You can set `INDEXNOW_API_KEY` in `.env` for convenience, or pass it as a parameter.
 
 ### Auto-Indexing Configuration
 
@@ -1122,21 +1199,27 @@ For other content types, IndexNow is recommended.
 
 ### "Sitemap not found" Error
 
+**Note:** This error only applies to Mode 2 (Full Page Indexer).
+
 **Solution:**
 1. Ensure sitemap is submitted in Google Search Console
 2. Check sitemap URL is accessible
 3. Run: `php artisan page-indexer:monitor-sitemaps --force`
 4. Verify `GOOGLE_SITE_URL` matches your Search Console property
+5. Make sure you're using Mode 2 (not Mode 1)
 
 ### Pages Not Getting Indexed
 
+**Note:** This troubleshooting section applies to Mode 2 (Full Page Indexer). For Mode 1, check your code implementation.
+
 **Check:**
-1. Auto-indexing is enabled (`AUTO_INDEXING_ENABLED=true` in `.env`)
-2. `GOOGLE_SITE_URL` is correctly set in `.env`
-3. Queue worker is running (`php artisan queue:work`)
-4. Check job failures: `php artisan queue:failed`
-5. Check page status in database
-6. Verify Service Account has Owner permissions
+1. Auto-indexing is enabled (`AUTO_INDEXING_ENABLED=true` in `.env`) - **Mode 2 only**
+2. `GOOGLE_SITE_URL` is correctly set in `.env` - **Mode 2 only**
+3. Queue worker is running (`php artisan queue:work`) - **Mode 2 only**
+4. Check job failures: `php artisan queue:failed` - **Mode 2 only**
+5. Check page status in database - **Mode 2 only**
+6. Verify Service Account has Owner permissions - **Both modes**
+7. Verify `GOOGLE_SERVICE_ACCOUNT_PATH` is correct - **Both modes**
 
 ### "Service Account not found" Error
 
